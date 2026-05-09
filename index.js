@@ -472,7 +472,11 @@ app.get("/", (req, res) => {
   const dbu = db.getUserById(user.id) || user;
   const fullName = `${dbu.first_name||dbu.username||""} ${dbu.last_name||""}`.trim() || dbu.email || "amigo";
   const initial = String(fullName).trim().charAt(0).toUpperCase() || "U";
+  const userAvatar = dbu.avatar_path || "";
   const h = (v)=>layout.escapeHtml(v||"");
+  const heroAvatar = userAvatar
+    ? `<img src="${h(userAvatar)}" alt="${h(fullName)}" class="cd-hero-avatar-img">`
+    : h(initial);
 
   // Stats personales
   let svcActive=0,invPending=0,wallet=0,tkOpen=0;
@@ -560,7 +564,7 @@ app.get("/", (req, res) => {
   ${welcomeNotice}
   ${verifyBanner}
   <section class="cd-hero">
-    <div class="cd-hero-avatar">${h(initial)}</div>
+    <div class="cd-hero-avatar">${heroAvatar}</div>
     <div class="cd-hero-text">
       <span class="greet"><i class="ri-sparkling-2-line"></i> ${greet}</span>
       <h1>Hola, ${h(fullName.split(" ")[0])} 👋</h1>
