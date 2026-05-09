@@ -72,21 +72,15 @@
 
   function buildSlideHtml(s, i){
     var cf = _spE(s.colorFrom||"#4c1d95"), ct = _spE(s.colorTo||"#7c3aed");
-    // Overlay mas suave para que se vea la imagen subida.
-    // Importante: NO usar comillas dobles dentro del style HTML para no
-    // romper el atributo. CSS acepta url(...) sin comillas para paths simples.
-    var bgSt = s.image
-      ? "background:url('"+_spE(s.image).replace(/'/g, "\\'")+"') center/cover no-repeat;"
-      : 'background:linear-gradient(135deg,'+cf+','+ct+');';
-    var ovl = s.image
-      ? '<div style="position:absolute;inset:0;background:linear-gradient(135deg,'+cf+'66,'+ct+'88);border-radius:10px;pointer-events:none;"></div>'
-      : '';
+    // Preview con CSS classes solamente. La imagen y los colores se aplican
+    // despues por DOM property, evitando cualquier problema de escape de
+    // comillas en el atributo style del HTML.
     var prevHtml =
-      '<div class="sp-preview" style="'+bgSt+'border-radius:10px;padding:18px;text-align:center;margin-top:10px;position:relative;overflow:hidden;isolation:isolate;">'+
-        ovl+
-        '<div style="position:relative;z-index:1;">'+
-          '<div style="font-size:15px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.4);">'+_spE(s.text||"Texto del slide")+'</div>'+
-          '<div style="font-size:12px;color:rgba(255,255,255,.9);margin-top:5px;text-shadow:0 1px 3px rgba(0,0,0,.4);">'+_spE(s.subtitle||"Subtítulo")+'</div>'+
+      '<div class="sp-preview" data-slide-preview="'+i+'">'+
+        '<div class="sp-preview-overlay" data-slide-overlay="'+i+'"></div>'+
+        '<div class="sp-preview-text">'+
+          '<div class="sp-preview-title">'+_spE(s.text||"Texto del slide")+'</div>'+
+          '<div class="sp-preview-sub">'+_spE(s.subtitle||"Subtítulo")+'</div>'+
         '</div>'+
       '</div>';
     var imgArea = '<div class="sp-img-area">'+
@@ -122,6 +116,34 @@
       '</div></div>';
   }
 
+  // Aplica colores e imagen al preview de un slide via DOM (NO inline HTML)
+  function spApplyPreview(i){
+    var s = _spData[i]; if (!s) return;
+    var prev = document.querySelector('[data-slide-preview="'+i+'"]');
+    var ovl = document.querySelector('[data-slide-overlay="'+i+'"]');
+    if (!prev) return;
+    var cf = s.colorFrom || "#4c1d95";
+    var ct = s.colorTo || "#7c3aed";
+    if (s.image) {
+      // Asignar imagen por DOM property: el navegador no parsea atributos
+      // HTML aqui, asi que cualquier ruta es segura.
+      prev.style.backgroundImage = "url(" + JSON.stringify(s.image) + ")";
+      prev.style.backgroundColor = "transparent";
+      if (ovl) {
+        ovl.style.background = "linear-gradient(135deg," + cf + "66," + ct + "88)";
+        ovl.style.display = "";
+      }
+    } else {
+      prev.style.backgroundImage = "linear-gradient(135deg," + cf + "," + ct + ")";
+      prev.style.backgroundColor = "";
+      if (ovl) ovl.style.display = "none";
+    }
+  }
+
+  function spApplyAllPreviews(){
+    for (var i = 0; i < _spData.length; i++) spApplyPreview(i);
+  }
+
   function spRender(){
     var el = document.getElementById("spList");
     if (!el) return;
@@ -132,6 +154,7 @@
       return;
     }
     el.innerHTML = _spData.map(buildSlideHtml).join("");
+    spApplyAllPreviews();
   }
 
   // Re-render solo del slide en el indice i, conservando estado de otros campos
@@ -142,6 +165,7 @@
     tmp.innerHTML = buildSlideHtml(_spData[i], i);
     var fresh = tmp.firstChild;
     if (fresh) item.parentNode.replaceChild(fresh, item);
+    spApplyPreview(i);
   }
 
   function spSaveOne(i, silent){
@@ -198,6 +222,31 @@
       });
   }
 
+  function spResetFactory(){
+    if (!confirm("¿Restablecer TODOS los slides a los valores de fábrica? Esto reemplaza tus slides actuales.")) return;
+    var btn = document.querySelector('[data-act="reset-factory"]');
+    var orig = btn ? btn.innerHTML : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line spin"></i> Restableciendo...'; }
+    fetch("/admin/support/reset-slides", {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "X-Requested-With":"fetch", "Accept":"application/json" },
+      body: "{}"
+    }).then(function(r){ return r.ok ? r.json() : Promise.reject(r); })
+      .then(function(d){
+        if (d && d.slides) _spData = d.slides.slice();
+        spRender();
+        if (btn) {
+          btn.innerHTML = '<i class="ri-checkbox-circle-line"></i> Restablecido';
+          setTimeout(function(){ btn.innerHTML = orig || '<i class="ri-restart-line"></i> Restablecer de fábrica'; btn.disabled = false; }, 1600);
+        }
+        spToast("Slides restablecidos a fábrica");
+      })
+      .catch(function(){
+        if (btn) { btn.innerHTML = orig || '<i class="ri-restart-line"></i> Restablecer de fábrica'; btn.disabled = false; }
+        spToast("Error al restablecer", true);
+      });
+  }
+
   function spSaveContact(form){
     var btn = form.querySelector('button[type="submit"]');
     var orig = btn ? btn.innerHTML : null;
@@ -233,6 +282,9 @@
     var saveAllBtn = t.closest ? t.closest("[data-act='save-all']") : null;
     if (saveAllBtn) { spSaveAll(); return; }
 
+    var resetBtn = t.closest ? t.closest("[data-act='reset-factory']") : null;
+    if (resetBtn) { spResetFactory(); return; }
+
     var saveOneBtn = t.closest ? t.closest("[data-act='save-one']") : null;
     if (saveOneBtn) { spSaveOne(parseInt(saveOneBtn.getAttribute("data-idx"), 10)); return; }
 
@@ -258,23 +310,14 @@
       if (pair === "next" && t.nextElementSibling) t.nextElementSibling.value = t.value;
       else if (pair === "prev" && t.previousElementSibling) t.previousElementSibling.value = t.value;
       // Actualizar preview en vivo del slide afectado (sin recrear inputs)
-      var item = t.closest('.sp-slide-item');
-      if (item) {
-        var prev = item.querySelector('.sp-preview');
-        if (prev) {
-          var s = _spData[i];
-          var cf = (s.colorFrom||"#4c1d95"), ct = (s.colorTo||"#7c3aed");
-          if (s.image) {
-            prev.style.background = 'url("'+s.image+'") center/cover no-repeat';
-          } else {
-            prev.style.background = 'linear-gradient(135deg,'+cf+','+ct+')';
-          }
-          var ovl = prev.querySelector('div[style*="position:absolute"]');
-          if (ovl && s.image) ovl.style.background = 'linear-gradient(135deg,'+cf+'66,'+ct+'88)';
-          var texts = prev.querySelectorAll('div[style*="z-index:1"] > div');
-          if (texts[0]) texts[0].textContent = s.text || "Texto del slide";
-          if (texts[1]) texts[1].textContent = s.subtitle || "Subtítulo";
-        }
+      spApplyPreview(i);
+      var prev = document.querySelector('[data-slide-preview="'+i+'"]');
+      if (prev) {
+        var s = _spData[i];
+        var titleEl = prev.querySelector('.sp-preview-title');
+        var subEl = prev.querySelector('.sp-preview-sub');
+        if (titleEl) titleEl.textContent = s.text || "Texto del slide";
+        if (subEl) subEl.textContent = s.subtitle || "Subtítulo";
       }
     }
   });
