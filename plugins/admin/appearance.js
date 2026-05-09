@@ -10,21 +10,7 @@ const DEF={site_name:"SKY ULTRA PLUS shop",theme_dark_bg:"#050508",theme_dark_ca
 function h(ctx,v){return ctx.layout.escapeHtml(v||"")}
 function reg(ctx){return require("../../core/pluginLoader").registry(ctx.db)}
 function g(db,k){return db.getSetting(k,DEF[k]||"")}
-function save(file,folder){
-  if(!file||!file.name)return"";
-  const d=path.join(process.cwd(),"uploads",folder);
-  if(!fs.existsSync(d))fs.mkdirSync(d,{recursive:true});
-  const n=Date.now()+"-"+crypto.randomBytes(4).toString("hex")+(path.extname(file.name)||".png");
-  const dest=path.join(d,n);
-  if(file.tempFilePath){
-    try{fs.renameSync(file.tempFilePath,dest);}catch(e){fs.copyFileSync(file.tempFilePath,dest);try{fs.unlinkSync(file.tempFilePath);}catch(_){}}
-  }else if(file.data&&file.data.length){
-    fs.writeFileSync(dest,file.data);
-  }else{
-    return"";
-  }
-  return"/uploads/"+folder+"/"+n;
-}
+function save(file,folder){if(!file||!file.name)return"";const d=path.join(process.cwd(),"uploads",folder);if(!fs.existsSync(d))fs.mkdirSync(d,{recursive:true});const n=Date.now()+"-"+crypto.randomBytes(4).toString("hex")+(path.extname(file.name)||".png");fs.writeFileSync(path.join(d,n),file.data);return"/uploads/"+folder+"/"+n}
 
 const COLORS_DARK=[
   ["theme_dark_bg","Fondo principal","Color base de toda la web en modo oscuro.","ri-contrast-2-line"],

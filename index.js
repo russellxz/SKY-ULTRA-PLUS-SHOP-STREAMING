@@ -21,25 +21,12 @@ app.set("trust proxy", 1);
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 
 const uploadDir = path.join(__dirname, "uploads");
-const tempUploadDir = path.join(uploadDir, ".tmp");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-if (!fs.existsSync(tempUploadDir)) fs.mkdirSync(tempUploadDir, { recursive: true });
 
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(express.urlencoded({ extended: true, limit: "1024mb" }));
-app.use(express.json({ limit: "1024mb" }));
-app.use(fileUpload({
-  createParentPath: true,
-  uploadDir,
-  useTempFiles: true,
-  tempFileDir: tempUploadDir,
-  preserveExtension: 8,
-  // Limite muy alto (1 GB) y sin abortar para que cualquier imagen pueda subirse
-  limits: { fileSize: 1024 * 1024 * 1024 },
-  abortOnLimit: false,
-  parseNested: true,
-  safeFileNames: false,
-}));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+app.use(express.json({ limit: "25mb" }));
+app.use(fileUpload({ createParentPath: true, uploadDir }));
 app.use("/public", express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(uploadDir));
 

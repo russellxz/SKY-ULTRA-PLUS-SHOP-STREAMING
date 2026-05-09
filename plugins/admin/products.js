@@ -12,21 +12,7 @@ function h(ctx,v){return ctx.layout.escapeHtml(v||"");}
 function reg(ctx){return require("../../core/pluginLoader").registry(ctx.db);}
 function slug(v){return String(v||"").trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"producto";}
 function migrate(db){const c=db.sqlite.prepare("PRAGMA table_info(products)").all().map(x=>x.name); if(!c.includes("slug"))db.sqlite.exec("ALTER TABLE products ADD COLUMN slug TEXT DEFAULT ''"); if(!c.includes("cycle_minutes"))db.sqlite.exec("ALTER TABLE products ADD COLUMN cycle_minutes INTEGER NOT NULL DEFAULT 0"); if(!c.includes("image_path"))db.sqlite.exec("ALTER TABLE products ADD COLUMN image_path TEXT DEFAULT ''"); if(!c.includes("stock_limit"))db.sqlite.exec("ALTER TABLE products ADD COLUMN stock_limit INTEGER NOT NULL DEFAULT 0");}
-function saveImg(file){
-  if(!file||!file.name)return"";
-  const d=path.join(process.cwd(),"uploads","products");
-  if(!fs.existsSync(d))fs.mkdirSync(d,{recursive:true});
-  const n=Date.now()+"-"+crypto.randomBytes(4).toString("hex")+(path.extname(file.name)||".png");
-  const dest=path.join(d,n);
-  if(file.tempFilePath){
-    try{fs.renameSync(file.tempFilePath,dest);}catch(e){fs.copyFileSync(file.tempFilePath,dest);try{fs.unlinkSync(file.tempFilePath);}catch(_){}}
-  }else if(file.data&&file.data.length){
-    fs.writeFileSync(dest,file.data);
-  }else{
-    return"";
-  }
-  return"/uploads/products/"+n;
-}
+function saveImg(file){if(!file||!file.name)return""; const d=path.join(process.cwd(),"uploads","products"); if(!fs.existsSync(d))fs.mkdirSync(d,{recursive:true}); const n=Date.now()+"-"+crypto.randomBytes(4).toString("hex")+(path.extname(file.name)||".png"); fs.writeFileSync(path.join(d,n),file.data); return "/uploads/products/"+n;}
 function items(body){const v=body.delivery_items; if(Array.isArray(v))return v.map(x=>String(x||"").trim()).filter(Boolean); return String(v||"").split("---").map(x=>x.trim()).filter(Boolean);}
 function addItems(ctx,id,body){const arr=items(body); if(!arr.length)return 0; const last=ctx.db.sqlite.prepare("SELECT COALESCE(MAX(order_index),0) m FROM product_inventory_items WHERE product_id=?").get(id).m||0; const st=ctx.db.sqlite.prepare("INSERT INTO product_inventory_items (product_id,content,status,order_index,created_at) VALUES (?,?,?,?,?)"); const tx=ctx.db.sqlite.transaction(()=>arr.forEach((x,i)=>st.run(id,x,"available",last+(i+1)*10,ctx.db.now()))); tx(); return arr.length;}
 function counts(ctx,id){const rows=ctx.db.sqlite.prepare("SELECT status,COUNT(*) c FROM product_inventory_items WHERE product_id=? GROUP BY status").all(id); const o={available:0,delivered:0,disabled:0,total:0}; for(const r of rows){o[r.status]=r.c;o.total+=r.c} return o;}
