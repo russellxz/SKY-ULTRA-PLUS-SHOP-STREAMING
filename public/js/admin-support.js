@@ -72,15 +72,17 @@
 
   function buildSlideHtml(s, i){
     var cf = _spE(s.colorFrom||"#4c1d95"), ct = _spE(s.colorTo||"#7c3aed");
-    // Overlay mas suave para que se vea la imagen subida
+    // Overlay mas suave para que se vea la imagen subida.
+    // Importante: NO usar comillas dobles dentro del style HTML para no
+    // romper el atributo. CSS acepta url(...) sin comillas para paths simples.
     var bgSt = s.image
-      ? 'background:url("'+_spE(s.image)+'") center/cover no-repeat;'
+      ? "background:url('"+_spE(s.image).replace(/'/g, "\\'")+"') center/cover no-repeat;"
       : 'background:linear-gradient(135deg,'+cf+','+ct+');';
     var ovl = s.image
-      ? '<div style="position:absolute;inset:0;background:linear-gradient(135deg,'+cf+'66,'+ct+'88);border-radius:10px;"></div>'
+      ? '<div style="position:absolute;inset:0;background:linear-gradient(135deg,'+cf+'66,'+ct+'88);border-radius:10px;pointer-events:none;"></div>'
       : '';
     var prevHtml =
-      '<div class="sp-preview" style="'+bgSt+'border-radius:10px;padding:18px;text-align:center;margin-top:10px;position:relative;overflow:hidden;">'+
+      '<div class="sp-preview" style="'+bgSt+'border-radius:10px;padding:18px;text-align:center;margin-top:10px;position:relative;overflow:hidden;isolation:isolate;">'+
         ovl+
         '<div style="position:relative;z-index:1;">'+
           '<div style="font-size:15px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.4);">'+_spE(s.text||"Texto del slide")+'</div>'+

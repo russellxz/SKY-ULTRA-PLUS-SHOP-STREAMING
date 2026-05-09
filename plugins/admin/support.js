@@ -86,7 +86,7 @@ function router({ db, auth, layout }) {
   <div id="spPanelSlides" style="display:${tab==="slides"?"block":"none"}">${slidesHtml}</div>
 </div>
 <script type="application/json" id="spInitData">${safeJson(slides)}</script>
-<script src="/public/js/admin-support.js?v=5"></script>`;
+<script src="/public/js/admin-support.js?v=6"></script>`;
 
     res.renderPage({ title: "Marketing Login", area: "admin", registry: getRegistry(db), content });
   }
