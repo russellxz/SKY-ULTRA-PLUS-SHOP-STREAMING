@@ -4,6 +4,17 @@ const path = require("path");
 const fs = require("fs");
 const { registry: getRegistry } = require("../../core/pluginLoader");
 
+// Slides de fabrica (default)
+const FACTORY_SLIDES = [
+  {"text":"¡Bienvenido a nuestra tienda!","subtitle":"Explora nuestros productos y servicios digitales","colorFrom":"#4c1d95","colorTo":"#7c3aed","image":""},
+  {"text":"Pagos 100% seguros","subtitle":"Múltiples métodos de pago rápidos y confiables","colorFrom":"#1e3a5f","colorTo":"#2563eb","image":""},
+  {"text":"Entrega inmediata","subtitle":"Recibe tus productos digitales al instante","colorFrom":"#1a3a2a","colorTo":"#059669","image":""},
+  {"text":"Soporte disponible","subtitle":"Estamos aquí para ayudarte en lo que necesites","colorFrom":"#3d1f1f","colorTo":"#dc2626","image":""},
+  {"text":"Precios imbatibles","subtitle":"La mejor relación calidad-precio del mercado","colorFrom":"#1f2d3d","colorTo":"#0ea5e9","image":""},
+  {"text":"Catálogo completo","subtitle":"Encuentra exactamente lo que estás buscando","colorFrom":"#3d2a00","colorTo":"#f59e0b","image":""},
+  {"text":"Comunidad activa","subtitle":"Únete a miles de clientes satisfechos","colorFrom":"#2d1f3d","colorTo":"#a855f7","image":""}
+];
+
 const config = {
   key: "admin_support",
   name: "Marketing Login",
@@ -68,12 +79,14 @@ function router({ db, auth, layout }) {
   <button type="button" class="sp-btn secondary" data-act="add"><i class="ri-add-line"></i> Agregar slide</button>
 </div>
 <div id="spList"><div class="sp-empty">Cargando slides...</div></div>
-<div class="sp-actions" style="margin-top:20px;">
-  <button type="button" class="sp-btn primary" data-act="save"><i class="ri-save-line"></i> Guardar slides</button>
-</div>`;
+<div class="sp-actions sp-actions-row" style="margin-top:20px;">
+  <button type="button" class="sp-btn primary" data-act="save-all"><i class="ri-save-line"></i> Guardar todos los slides</button>
+  <button type="button" class="sp-btn danger" data-act="reset-factory"><i class="ri-restart-line"></i> Restablecer de fábrica</button>
+</div>
+<div class="sp-toast" id="spToast"><i class="ri-checkbox-circle-line"></i><span>Guardado</span></div>`;
 
     const content = `
-<link rel="stylesheet" href="/public/css/admin-support.css?v=2">
+<link rel="stylesheet" href="/public/css/admin-support.css?v=7">
 <div class="sp-page">
   <div class="sp-head"><div class="sp-head-icon"><i class="ri-customer-service-2-line"></i></div><div><h2>Marketing Login</h2><p>Configura slides promocionales y contactos de soporte para el login.</p></div></div>
   ${flash}
@@ -85,12 +98,28 @@ function router({ db, auth, layout }) {
   <div id="spPanelSlides" style="display:${tab==="slides"?"block":"none"}">${slidesHtml}</div>
 </div>
 <script type="application/json" id="spInitData">${safeJson(slides)}</script>
-<script src="/public/js/admin-support.js?v=3"></script>`;
+<script src="/public/js/admin-support.js?v=7"></script>`;
 
     res.renderPage({ title: "Marketing Login", area: "admin", registry: getRegistry(db), content });
   }
 
   r.get("/", (req, res) => renderPage(req, res, req.query.tab || "contact"));
+
+  function isAjax(req) {
+    return req.headers["x-requested-with"] === "fetch" ||
+      (req.headers.accept || "").indexOf("application/json") !== -1;
+  }
+
+  function normalizeSlide(s) {
+    s = s || {};
+    return {
+      text: String(s.text || ""),
+      subtitle: String(s.subtitle || ""),
+      colorFrom: String(s.colorFrom || "#4c1d95"),
+      colorTo: String(s.colorTo || "#7c3aed"),
+      image: String(s.image || ""),
+    };
+  }
 
   r.post("/save-contact", (req, res) => {
     try {
@@ -98,33 +127,60 @@ function router({ db, auth, layout }) {
       db.setSetting("support_whatsapp_country", req.body.support_whatsapp_country || "+1");
       db.setSetting("support_whatsapp_number", req.body.support_whatsapp_number || "");
       db.setSetting("support_whatsapp_group", req.body.support_whatsapp_group || "");
+      if (isAjax(req)) return res.json({ ok: true });
       res.redirect("/admin/support?ok=1");
     } catch (e) {
+      if (isAjax(req)) return res.status(500).json({ ok: false, error: e.message });
       res.redirect("/admin/support?err=1");
     }
   });
 
   r.post("/save-slides", (req, res) => {
     try {
-      const raw = req.body.slides;
+      const raw = (req.body && req.body.slides) || (req.body && Array.isArray(req.body) ? req.body : null);
       const slides = [];
-      if (raw && typeof raw === "object") {
+      if (Array.isArray(raw)) {
+        raw.forEach(s => slides.push(normalizeSlide(s)));
+      } else if (raw && typeof raw === "object") {
         const keys = Object.keys(raw).sort((a,b) => parseInt(a)-parseInt(b));
-        for (const k of keys) {
-          const s = raw[k] || {};
-          slides.push({
-            text: String(s.text || ""),
-            subtitle: String(s.subtitle || ""),
-            colorFrom: String(s.colorFrom || "#4c1d95"),
-            colorTo: String(s.colorTo || "#7c3aed"),
-            image: String(s.image || ""),
-          });
-        }
+        for (const k of keys) slides.push(normalizeSlide(raw[k]));
       }
       db.setSetting("promo_slides", JSON.stringify(slides));
+      if (isAjax(req)) return res.json({ ok: true, count: slides.length });
       res.redirect("/admin/support?tab=slides&ok=1");
     } catch (e) {
+      if (isAjax(req)) return res.status(500).json({ ok: false, error: e.message });
       res.redirect("/admin/support?tab=slides&err=1");
+    }
+  });
+
+  // Restablecer slides de fabrica
+  r.post("/reset-slides", (req, res) => {
+    try {
+      db.setSetting("promo_slides", JSON.stringify(FACTORY_SLIDES));
+      if (isAjax(req)) return res.json({ ok: true, slides: FACTORY_SLIDES });
+      res.redirect("/admin/support?tab=slides&ok=1");
+    } catch (e) {
+      if (isAjax(req)) return res.status(500).json({ ok: false, error: e.message });
+      res.redirect("/admin/support?tab=slides&err=1");
+    }
+  });
+
+  // Guardar un solo slide (por indice). Si no existe, lo agrega.
+  r.post("/save-slide", (req, res) => {
+    try {
+      const idx = parseInt(req.body.index, 10);
+      const slide = normalizeSlide(req.body.slide || req.body);
+      const slides = getSlides();
+      if (Number.isFinite(idx) && idx >= 0 && idx < slides.length) {
+        slides[idx] = slide;
+      } else {
+        slides.push(slide);
+      }
+      db.setSetting("promo_slides", JSON.stringify(slides));
+      res.json({ ok: true, index: Number.isFinite(idx) ? idx : slides.length - 1, count: slides.length });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e.message });
     }
   });
 

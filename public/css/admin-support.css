@@ -43,6 +43,55 @@
 .sp-rm-img{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#fca5a5;cursor:pointer;padding:4px 8px;font-size:13px;}
 .sp-empty{text-align:center;padding:40px;color:rgba(176,188,212,.5);font-size:14px;}
 
+/* Preview del slide. Posicionamiento via CSS class (no inline) para que
+   nunca pueda romperse por escapes de comillas dentro del style HTML. */
+.sp-preview{
+  position:relative !important;
+  overflow:hidden !important;
+  isolation:isolate;
+  border-radius:10px;
+  padding:18px;
+  text-align:center;
+  margin-top:10px;
+  min-height:80px;
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+}
+.sp-preview-overlay{
+  position:absolute !important;
+  inset:0 !important;
+  border-radius:10px;
+  pointer-events:none;
+  z-index:1;
+}
+.sp-preview-text{
+  position:relative;
+  z-index:2;
+}
+.sp-preview-title{
+  font-size:15px;font-weight:700;color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,.5);
+}
+.sp-preview-sub{
+  font-size:12px;color:rgba(255,255,255,.92);margin-top:5px;
+  text-shadow:0 1px 3px rgba(0,0,0,.5);
+}
+
+.sp-btn-sm{padding:9px 16px;font-size:13px;}
+.sp-btn.ok{background:linear-gradient(135deg,#059669,#10b981)!important;}
+.sp-btn[disabled]{opacity:.7;cursor:wait;}
+.sp-btn.danger{background:linear-gradient(135deg,#b91c1c,#ef4444)!important;color:#fff;}
+.sp-slide-save{margin-top:16px;justify-content:flex-end;}
+.sp-actions-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.sp-actions-row .sp-btn{margin:0;}
+.spin{display:inline-block;animation:sp-spin 1s linear infinite;}
+@keyframes sp-spin{to{transform:rotate(360deg);}}
+.sp-toast{position:fixed;right:18px;bottom:18px;display:flex;align-items:center;gap:8px;padding:12px 18px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border-radius:12px;font-size:14px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.35);transform:translateY(120%);opacity:0;transition:transform .25s,opacity .25s;z-index:9999;pointer-events:none;}
+.sp-toast.show{transform:translateY(0);opacity:1;}
+.sp-toast.err{background:linear-gradient(135deg,#dc2626,#ef4444);}
+.sp-toast i{font-size:18px;}
+
 /* Light mode */
 body.light .sp-head{background:var(--light-card,#fff);border-color:rgba(37,99,235,.18);}
 body.light .sp-head h2{color:var(--light-text,#102033);}
