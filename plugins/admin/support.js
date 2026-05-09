@@ -69,12 +69,11 @@ function router({ db, auth, layout }) {
 </div>
 <div id="spList"><div class="sp-empty">Cargando slides...</div></div>
 <div class="sp-actions" style="margin-top:20px;">
-  <button type="button" class="sp-btn primary" data-act="save-all"><i class="ri-save-line"></i> Guardar todos los slides</button>
-</div>
-<div class="sp-toast" id="spToast"><i class="ri-checkbox-circle-line"></i><span>Guardado</span></div>`;
+  <button type="button" class="sp-btn primary" data-act="save"><i class="ri-save-line"></i> Guardar slides</button>
+</div>`;
 
     const content = `
-<link rel="stylesheet" href="/public/css/admin-support.css?v=4">
+<link rel="stylesheet" href="/public/css/admin-support.css?v=2">
 <div class="sp-page">
   <div class="sp-head"><div class="sp-head-icon"><i class="ri-customer-service-2-line"></i></div><div><h2>Marketing Login</h2><p>Configura slides promocionales y contactos de soporte para el login.</p></div></div>
   ${flash}
@@ -86,28 +85,12 @@ function router({ db, auth, layout }) {
   <div id="spPanelSlides" style="display:${tab==="slides"?"block":"none"}">${slidesHtml}</div>
 </div>
 <script type="application/json" id="spInitData">${safeJson(slides)}</script>
-<script src="/public/js/admin-support.js?v=5"></script>`;
+<script src="/public/js/admin-support.js?v=3"></script>`;
 
     res.renderPage({ title: "Marketing Login", area: "admin", registry: getRegistry(db), content });
   }
 
   r.get("/", (req, res) => renderPage(req, res, req.query.tab || "contact"));
-
-  function isAjax(req) {
-    return req.headers["x-requested-with"] === "fetch" ||
-      (req.headers.accept || "").indexOf("application/json") !== -1;
-  }
-
-  function normalizeSlide(s) {
-    s = s || {};
-    return {
-      text: String(s.text || ""),
-      subtitle: String(s.subtitle || ""),
-      colorFrom: String(s.colorFrom || "#4c1d95"),
-      colorTo: String(s.colorTo || "#7c3aed"),
-      image: String(s.image || ""),
-    };
-  }
 
   r.post("/save-contact", (req, res) => {
     try {
@@ -115,48 +98,33 @@ function router({ db, auth, layout }) {
       db.setSetting("support_whatsapp_country", req.body.support_whatsapp_country || "+1");
       db.setSetting("support_whatsapp_number", req.body.support_whatsapp_number || "");
       db.setSetting("support_whatsapp_group", req.body.support_whatsapp_group || "");
-      if (isAjax(req)) return res.json({ ok: true });
       res.redirect("/admin/support?ok=1");
     } catch (e) {
-      if (isAjax(req)) return res.status(500).json({ ok: false, error: e.message });
       res.redirect("/admin/support?err=1");
     }
   });
 
   r.post("/save-slides", (req, res) => {
     try {
-      const raw = (req.body && req.body.slides) || (req.body && Array.isArray(req.body) ? req.body : null);
+      const raw = req.body.slides;
       const slides = [];
-      if (Array.isArray(raw)) {
-        raw.forEach(s => slides.push(normalizeSlide(s)));
-      } else if (raw && typeof raw === "object") {
+      if (raw && typeof raw === "object") {
         const keys = Object.keys(raw).sort((a,b) => parseInt(a)-parseInt(b));
-        for (const k of keys) slides.push(normalizeSlide(raw[k]));
+        for (const k of keys) {
+          const s = raw[k] || {};
+          slides.push({
+            text: String(s.text || ""),
+            subtitle: String(s.subtitle || ""),
+            colorFrom: String(s.colorFrom || "#4c1d95"),
+            colorTo: String(s.colorTo || "#7c3aed"),
+            image: String(s.image || ""),
+          });
+        }
       }
       db.setSetting("promo_slides", JSON.stringify(slides));
-      if (isAjax(req)) return res.json({ ok: true, count: slides.length });
       res.redirect("/admin/support?tab=slides&ok=1");
     } catch (e) {
-      if (isAjax(req)) return res.status(500).json({ ok: false, error: e.message });
       res.redirect("/admin/support?tab=slides&err=1");
-    }
-  });
-
-  // Guardar un solo slide (por indice). Si no existe, lo agrega.
-  r.post("/save-slide", (req, res) => {
-    try {
-      const idx = parseInt(req.body.index, 10);
-      const slide = normalizeSlide(req.body.slide || req.body);
-      const slides = getSlides();
-      if (Number.isFinite(idx) && idx >= 0 && idx < slides.length) {
-        slides[idx] = slide;
-      } else {
-        slides.push(slide);
-      }
-      db.setSetting("promo_slides", JSON.stringify(slides));
-      res.json({ ok: true, index: Number.isFinite(idx) ? idx : slides.length - 1, count: slides.length });
-    } catch (e) {
-      res.status(500).json({ ok: false, error: e.message });
     }
   });
 
