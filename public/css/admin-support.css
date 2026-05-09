@@ -1,0 +1,63 @@
+.sp-page{padding:4px 0;}
+.sp-head{display:flex;align-items:center;gap:18px;margin-bottom:26px;padding:22px 26px;background:var(--dark-card,#101426);border-radius:18px;border:1px solid rgba(139,92,246,.2);}
+.sp-head-icon{width:50px;height:50px;background:linear-gradient(135deg,#4c1d95,#7c3aed);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;color:#fff;flex-shrink:0;}
+.sp-head h2{margin:0 0 4px;font-size:20px;font-weight:900;color:var(--dark-text,#e9f2ff);}
+.sp-head p{margin:0;color:rgba(176,188,212,.7);font-size:14px;}
+.sp-tabs{display:flex;gap:7px;margin-bottom:22px;}
+.sp-tab{display:flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(255,255,255,.04);border:1px solid rgba(139,92,246,.15);border-radius:11px;color:rgba(176,188,212,.7);cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;}
+.sp-tab.active,.sp-tab:hover{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.4);color:#c4b5fd;}
+.sp-card{background:var(--dark-card,#101426);border:1px solid rgba(139,92,246,.2);border-radius:16px;padding:24px;}
+.sp-sect{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--dark-text,#e9f2ff);margin:0 0 16px;}
+.sp-field{margin-bottom:14px;}
+.sp-field label{display:block;font-size:13px;font-weight:600;color:rgba(176,188,212,.8);margin-bottom:6px;}
+.sp-field input,.sp-field select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(139,92,246,.2);border-radius:10px;color:var(--dark-text,#e9f2ff);font-size:14px;padding:10px 14px;box-sizing:border-box;outline:none;transition:border-color .2s,box-shadow .2s;}
+.sp-field input:focus,.sp-field select:focus{border-color:rgba(139,92,246,.55);box-shadow:0 0 0 3px rgba(124,58,237,.12);}
+.sp-field select option{background:#101426;}
+.sp-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.sp-actions{display:flex;gap:12px;margin-top:20px;}
+.sp-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:11px;border:none;cursor:pointer;font-size:14px;font-weight:700;transition:opacity .2s,transform .15s;}
+.sp-btn.primary{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.35);}
+.sp-btn.secondary{background:rgba(139,92,246,.14);border:1px solid rgba(139,92,246,.3);color:#c4b5fd;}
+.sp-btn:hover{opacity:.85;transform:translateY(-1px);}
+.sp-flash{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;font-size:14px;margin-bottom:20px;}
+.sp-flash.ok{background:rgba(5,150,105,.15);border:1px solid rgba(5,150,105,.4);color:#6ee7b7;}
+.sp-flash.err{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
+.sp-slides-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sp-slides-ct{font-size:14px;color:rgba(176,188,212,.7);}
+.sp-slide-item{background:rgba(255,255,255,.03);border:1px solid rgba(139,92,246,.18);border-radius:14px;padding:18px;margin-bottom:12px;}
+.sp-slide-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sp-slide-n{font-size:12px;font-weight:700;color:rgba(139,92,246,.9);text-transform:uppercase;letter-spacing:.07em;}
+.sp-slide-acts{display:flex;gap:6px;}
+.sp-icon-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:rgba(255,255,255,.06);border:1px solid rgba(139,92,246,.18);border-radius:8px;color:rgba(176,188,212,.8);cursor:pointer;font-size:14px;transition:all .2s;}
+.sp-icon-btn:hover{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.4);color:#c4b5fd;}
+.sp-icon-btn.danger:hover{background:rgba(239,68,68,.14);border-color:rgba(239,68,68,.4);color:#fca5a5;}
+.sp-slide-body{display:flex;flex-direction:column;}
+.sp-color{display:flex;align-items:center;gap:8px;}
+.sp-color input[type="color"]{width:42px;height:38px;border-radius:8px;border:1px solid rgba(139,92,246,.3);cursor:pointer;padding:2px;background:none;flex-shrink:0;}
+.sp-color input[type="text"]{flex:1;}
+.sp-img-area{display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
+.sp-up-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.28);border-radius:9px;color:#c4b5fd;cursor:pointer;font-size:13px;transition:all .2s;}
+.sp-up-btn:hover{background:rgba(139,92,246,.22);}
+.sp-cur-img{display:flex;align-items:center;gap:8px;}
+.sp-cur-img img{height:48px;border-radius:8px;object-fit:cover;}
+.sp-rm-img{background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#fca5a5;cursor:pointer;padding:4px 8px;font-size:13px;}
+.sp-empty{text-align:center;padding:40px;color:rgba(176,188,212,.5);font-size:14px;}
+
+/* Light mode */
+body.light .sp-head{background:var(--light-card,#fff);border-color:rgba(37,99,235,.18);}
+body.light .sp-head h2{color:var(--light-text,#102033);}
+body.light .sp-head p{color:rgba(83,97,115,.8);}
+body.light .sp-tab{background:rgba(0,0,0,.03);border-color:rgba(37,99,235,.15);color:rgba(83,97,115,.8);}
+body.light .sp-tab.active,body.light .sp-tab:hover{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.4);color:#2563eb;}
+body.light .sp-card{background:var(--light-card,#fff);border-color:rgba(37,99,235,.18);}
+body.light .sp-sect{color:var(--light-text,#102033);}
+body.light .sp-field label{color:rgba(83,97,115,.9);}
+body.light .sp-field input,body.light .sp-field select{background:rgba(0,0,0,.03);border-color:rgba(37,99,235,.2);color:var(--light-text,#102033);}
+body.light .sp-field input:focus,body.light .sp-field select:focus{border-color:rgba(37,99,235,.5);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+body.light .sp-field select option{background:#fff;color:#102033;}
+body.light .sp-slide-item{background:rgba(0,0,0,.02);border-color:rgba(37,99,235,.15);}
+body.light .sp-icon-btn{background:rgba(0,0,0,.04);border-color:rgba(37,99,235,.18);color:rgba(83,97,115,.8);}
+body.light .sp-icon-btn:hover{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.4);color:#2563eb;}
+body.light .sp-btn.secondary{background:rgba(37,99,235,.1);border-color:rgba(37,99,235,.3);color:#2563eb;}
+body.light .sp-up-btn{background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.25);color:#2563eb;}
+body.light .sp-slides-ct{color:rgba(83,97,115,.7);}

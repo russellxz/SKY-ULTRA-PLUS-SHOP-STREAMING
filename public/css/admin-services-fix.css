@@ -1,0 +1,6 @@
+@import url('/public/css/admin-services-invoice-like.css');
+@import url('/public/css/svc-final-fix.css');
+@import url('/public/css/svc-page-final.css');
+@import url('/public/css/svc-topbar-reset.css');
+@import url('/public/css/services-topbar-position.css');
+.svc-service strong{display:none!important}.svc-mini-tag{display:inline-flex!important}.svc-table-wrap{overflow-x:auto!important}.svc-table{min-width:820px!important}.svc-actions{display:flex!important;gap:8px!important;align-items:center!important}.svc-actions form{margin:0!important}.svc-action-btn{width:40px!important;height:40px!important}.svc-data-btn{white-space:nowrap!important}

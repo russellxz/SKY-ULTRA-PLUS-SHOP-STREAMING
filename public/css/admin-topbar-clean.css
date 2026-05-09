@@ -1,0 +1,44 @@
+/* Limpieza final de barra superior en modo admin */
+.area-admin .topbar{
+  justify-content:space-between!important;
+}
+.area-admin .topbar-brand{
+  display:none!important;
+}
+.area-admin .topbar .top-search{
+  display:none!important;
+}
+.area-admin .topbar .mobile-menu{
+  margin-right:auto!important;
+}
+.area-admin .topbar .top-actions{
+  margin-left:auto!important;
+}
+@media(max-width:980px){
+  .area-admin .topbar{
+    height:60px!important;
+    min-height:60px!important;
+    padding:0 10px!important;
+    gap:8px!important;
+  }
+  .area-admin .topbar .mobile-menu{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+    border-radius:11px!important;
+  }
+  .area-admin .topbar .theme-toggle,
+  .area-admin .topbar .user-chip>span{
+    width:38px!important;
+    height:38px!important;
+    min-width:38px!important;
+  }
+  .area-admin .content{
+    padding-top:74px!important;
+  }
+  .area-admin .sidebar{
+    top:60px!important;
+    height:calc(100vh - 60px)!important;
+    height:calc(100dvh - 60px)!important;
+  }
+}

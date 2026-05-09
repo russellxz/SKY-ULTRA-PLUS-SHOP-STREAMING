@@ -1,0 +1,350 @@
+/* =========================================================
+   TOPBAR + SIDEBAR (admin + cliente)
+   - Diseno limpio y simple, copiando logica de facturas
+   - Topbar SIN marca (la marca esta en el sidebar)
+   - En movil: sidebar empieza debajo del topbar al abrirse
+   ========================================================= */
+
+/* Limpiar pseudo-elementos heredados */
+html body .topbar:before,
+html body .topbar:after{
+  content:none!important;
+  display:none!important;
+}
+
+/* ============ TOPBAR (escritorio + base) ============ */
+html body .topbar{
+  position:sticky!important;
+  top:0!important;
+  width:auto!important;
+  height:72px!important;
+  min-height:72px!important;
+  margin:0!important;
+  padding:0 22px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  background:#0d1230!important;
+  background-color:#0d1230!important;
+  background-image:linear-gradient(180deg,#10152e 0%,#0a0e22 100%)!important;
+  border-bottom:1px solid rgba(139,92,246,.28)!important;
+  box-shadow:0 6px 22px rgba(0,0,0,.35)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  z-index:50!important;
+  isolation:isolate!important;
+  box-sizing:border-box!important;
+}
+
+html body.light .topbar{
+  background:#ffffff!important;
+  background-color:#ffffff!important;
+  background-image:linear-gradient(180deg,#ffffff 0%,#f5f6fc 100%)!important;
+  border-bottom-color:rgba(139,92,246,.18)!important;
+  box-shadow:0 6px 18px rgba(15,23,42,.08)!important;
+}
+
+/* Buscador (oculto siempre, visible solo en pantallas grandes) */
+html body .topbar .top-search{display:none!important}
+@media(min-width:1180px){
+  html body .topbar .top-search{
+    display:flex!important;
+    align-items:center;
+    gap:10px;
+    padding:0 14px;
+    height:44px;
+    width:min(380px,30vw);
+    border-radius:14px;
+    border:1px solid rgba(139,92,246,.22)!important;
+    background:rgba(255,255,255,.04)!important;
+    color:rgba(255,255,255,.78);
+  }
+  html body.light .topbar .top-search{
+    background:rgba(15,23,42,.04)!important;
+    border-color:rgba(15,23,42,.12)!important;
+    color:#0f172a!important;
+  }
+}
+
+/* Acciones (theme + user + salir) */
+html body .topbar .top-actions{
+  display:flex!important;
+  align-items:center;
+  gap:10px;
+  flex:0 0 auto;
+  margin:0!important;
+  padding:0!important;
+  position:static!important;
+  margin-left:auto!important;
+}
+
+html body .topbar .theme-toggle{
+  width:42px!important;
+  height:42px!important;
+  min-width:42px!important;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:12px!important;
+  border:1px solid rgba(139,92,246,.32)!important;
+  background:rgba(139,92,246,.16)!important;
+  color:#c4b5fd!important;
+  cursor:pointer;
+  box-shadow:none!important;
+  position:relative!important;
+}
+html body.light .topbar .theme-toggle{
+  background:rgba(139,92,246,.1)!important;
+  border-color:rgba(139,92,246,.28)!important;
+  color:#6d28d9!important;
+}
+html body .topbar .theme-toggle i{font-size:19px!important;line-height:1!important}
+
+html body .topbar .user-chip{
+  display:flex!important;
+  align-items:center;
+  gap:10px;
+  padding:4px 14px 4px 4px;
+  border-radius:999px;
+  border:1px solid rgba(139,92,246,.28);
+  background:rgba(139,92,246,.14);
+  min-height:46px;
+}
+html body.light .topbar .user-chip{
+  background:rgba(139,92,246,.08)!important;
+  border-color:rgba(139,92,246,.22)!important;
+}
+html body .topbar .user-chip>span{
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  border-radius:50%!important;
+  background:linear-gradient(135deg,#7c3aed,#d946ef)!important;
+  display:grid!important;
+  place-items:center!important;
+  color:#fff!important;
+  font-weight:900!important;
+  overflow:hidden!important;
+}
+html body .topbar .user-chip>span>.user-chip-logo{
+  width:100%!important;
+  height:100%!important;
+  border-radius:50%!important;
+  object-fit:cover!important;
+  display:block!important;
+}
+html body .topbar .user-chip>div{display:flex;flex-direction:column;line-height:1.15}
+html body .topbar .user-chip b{color:#fff!important;font-weight:850!important;font-size:13px!important;white-space:nowrap}
+html body.light .topbar .user-chip b{color:#0f172a!important}
+html body .topbar .user-chip small{color:rgba(196,181,253,.82)!important;font-size:11px!important;font-weight:650;white-space:nowrap;opacity:1!important}
+html body.light .topbar .user-chip small{color:#7c3aed!important}
+
+html body .topbar .top-actions>a{
+  padding:11px 18px!important;
+  border-radius:12px!important;
+  background:linear-gradient(135deg,#7c3aed,#d946ef)!important;
+  color:#fff!important;
+  font-weight:900!important;
+  font-size:13px!important;
+  text-decoration:none!important;
+  box-shadow:0 6px 20px rgba(139,92,246,.4)!important;
+  border:0!important;
+  display:inline-flex;
+  align-items:center;
+  height:42px;
+}
+
+/* Hamburguesa oculta en escritorio */
+html body .topbar .mobile-menu{display:none!important}
+
+/* ============ MOVIL (max-width:980px) ============ */
+@media(max-width:980px){
+  html body .topbar{
+    position:fixed!important;
+    top:0!important;
+    left:0!important;
+    right:0!important;
+    width:100%!important;
+    min-width:100%!important;
+    max-width:100%!important;
+    height:64px!important;
+    min-height:64px!important;
+    padding:0 14px!important;
+    margin:0!important;
+    background:#0d1230!important;
+    background-color:#0d1230!important;
+    background-image:none!important;
+    border-bottom:1px solid rgba(139,92,246,.32)!important;
+    box-shadow:0 4px 18px rgba(0,0,0,.4)!important;
+    z-index:260!important;
+    justify-content:space-between!important;
+  }
+  html body.light .topbar{
+    background:#ffffff!important;
+    background-color:#ffffff!important;
+    background-image:none!important;
+    box-shadow:0 4px 14px rgba(15,23,42,.1)!important;
+  }
+  html body .topbar .mobile-menu{
+    display:grid!important;
+    place-items:center!important;
+    width:42px!important;
+    height:42px!important;
+    min-width:42px!important;
+    padding:0!important;
+    margin:0!important;
+    border-radius:12px!important;
+    background:linear-gradient(135deg,#7c3aed,#d946ef)!important;
+    border:0!important;
+    color:#fff!important;
+    font-size:22px!important;
+    box-shadow:0 6px 16px rgba(139,92,246,.42)!important;
+    cursor:pointer;
+    flex:0 0 auto;
+    position:static!important;
+  }
+  html body .topbar .top-actions{
+    gap:8px!important;
+    margin-left:auto!important;
+    position:static!important;
+  }
+  html body .topbar .top-actions>a{display:none!important}
+  html body .topbar .theme-toggle{
+    width:40px!important;
+    height:40px!important;
+    min-width:40px!important;
+    border-radius:11px!important;
+  }
+  html body .topbar .theme-toggle i{font-size:17px!important}
+  html body .topbar .user-chip{
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+    min-height:auto!important;
+  }
+  html body.light .topbar .user-chip{background:transparent!important;border:0!important}
+  html body .topbar .user-chip>span{
+    width:40px!important;
+    height:40px!important;
+    min-width:40px!important;
+  }
+  html body .topbar .user-chip>div{display:none!important}
+
+  /* Espacio para el topbar fijo */
+  html body.area-admin .content,
+  html body.area-client .content{padding-top:80px!important}
+
+  /* Sidebar empieza DEBAJO del topbar (asi se ve la marca completa al abrir el menu) */
+  html body .sidebar{
+    top:64px!important;
+    height:calc(100vh - 64px)!important;
+    height:calc(100dvh - 64px)!important;
+    z-index:270!important;
+  }
+}
+
+@media(max-width:480px){
+  html body .topbar{
+    height:60px!important;
+    min-height:60px!important;
+    padding:0 10px!important;
+  }
+  html body.area-admin .content,
+  html body.area-client .content{padding-top:74px!important}
+  html body .sidebar{
+    top:60px!important;
+    height:calc(100vh - 60px)!important;
+    height:calc(100dvh - 60px)!important;
+  }
+}
+
+/* ============ DROPDOWN MENU del avatar ============ */
+html body .topbar .user-chip{
+  position:relative;
+  cursor:pointer;
+  user-select:none;
+}
+html body .topbar .user-chip-menu{
+  position:absolute;
+  top:calc(100% + 10px);
+  right:0;
+  z-index:500;
+  min-width:240px;
+  display:none;
+  flex-direction:column;
+  border-radius:14px;
+  background:linear-gradient(145deg,rgba(13,18,38,.98),rgba(10,14,28,.95));
+  border:1px solid rgba(139,92,246,.28);
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
+  padding:6px;
+  overflow:hidden;
+}
+html body.light .topbar .user-chip-menu{
+  background:#ffffff;
+  border-color:rgba(124,58,237,.22);
+  box-shadow:0 18px 40px rgba(15,23,42,.18);
+}
+html body .topbar .user-chip.open .user-chip-menu{display:flex}
+html body .topbar .user-chip-menu-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 12px 14px;
+  border-bottom:1px solid rgba(139,92,246,.18);
+  margin-bottom:6px;
+}
+html body.light .topbar .user-chip-menu-head{border-bottom-color:rgba(124,58,237,.14)}
+html body .topbar .user-chip-menu-avatar{
+  width:42px;height:42px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,#7c3aed,#d946ef);
+  color:#fff;
+  font-weight:900;
+  font-size:16px;
+  flex:0 0 auto;
+  overflow:hidden;
+}
+html body .topbar .user-chip-menu-avatar>img,
+html body .topbar .user-chip-menu-avatar>.user-chip-logo{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;display:block!important}
+html body .topbar .user-chip-menu-head>div{min-width:0;flex:1}
+html body .topbar .user-chip-menu-head b{display:block;font-size:14px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body.light .topbar .user-chip-menu-head b{color:#0f172a}
+html body .topbar .user-chip-menu-head small{display:block;font-size:11px;color:rgba(233,242,255,.6);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+html body.light .topbar .user-chip-menu-head small{color:rgba(15,23,42,.6)}
+html body .topbar .user-chip-menu a{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:10px 12px;
+  border-radius:10px;
+  text-decoration:none;
+  color:rgba(233,242,255,.85);
+  font-weight:850;
+  font-size:13px;
+}
+html body.light .topbar .user-chip-menu a{color:#0f172a}
+html body .topbar .user-chip-menu a:hover{background:rgba(139,92,246,.18);color:#fff}
+html body.light .topbar .user-chip-menu a:hover{background:rgba(124,58,237,.1);color:#7c3aed}
+html body .topbar .user-chip-menu a i{font-size:16px;color:#a78bfa}
+html body.light .topbar .user-chip-menu a i{color:#7c3aed}
+html body .topbar .user-chip-menu a.danger{color:#fb7185}
+html body .topbar .user-chip-menu a.danger i{color:#fb7185}
+html body .topbar .user-chip-menu a.danger:hover{background:rgba(244,63,94,.16);color:#fda4af}
+html body.light .topbar .user-chip-menu a.danger{color:#be123c}
+html body.light .topbar .user-chip-menu a.danger i{color:#be123c}
+html body.light .topbar .user-chip-menu a.danger:hover{background:rgba(244,63,94,.1)}
+html body .topbar .user-chip-divider{height:1px;background:rgba(255,255,255,.08);margin:4px 4px}
+html body.light .topbar .user-chip-divider{background:rgba(15,23,42,.08)}
+
+/* Estilos del logout en sidebar cliente */
+.nav-item.nav-logout{color:#fb7185!important}
+.nav-item.nav-logout i{color:#fb7185}
+.nav-item.nav-logout:hover{background:rgba(244,63,94,.14)!important;border-color:rgba(244,63,94,.32)!important}
+
+/* Estilos del logout en sidebar admin */
+.admin-sidebar-item.admin-logout-item{color:#fb7185}
+.admin-sidebar-item.admin-logout-item:hover{background:rgba(244,63,94,.08);border-radius:14px}
+

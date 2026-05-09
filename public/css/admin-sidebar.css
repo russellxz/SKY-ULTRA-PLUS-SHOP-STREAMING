@@ -1,0 +1,46 @@
+.area-admin .sidebar{width:340px;padding:24px 24px 28px;background:linear-gradient(180deg,rgba(4,10,24,.96),rgba(6,12,28,.94))!important;border-right:1px solid rgba(139,92,246,.22);box-shadow:18px 0 70px rgba(0,0,0,.38)}.area-admin .main{margin-left:340px}.admin-sidebar-wrap{display:flex;flex-direction:column;gap:22px}.area-admin .sidebar .brand,.area-admin .sidebar .admin-mode-badge,.area-admin .sidebar .nav-group,.area-admin .sidebar>.nav-item{display:none!important}.admin-brand-card{display:flex;align-items:center;gap:16px}.admin-brand-avatar,.admin-brand-logo{width:72px;height:72px;border-radius:22px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#6d28d9,#d946ef);box-shadow:0 12px 34px rgba(168,85,247,.38);color:#fff;font-weight:900;font-size:34px}.admin-brand-logo img{width:100%;height:100%;object-fit:cover}.admin-brand-meta b{display:block;font-size:22px;line-height:1.05;color:#fff;font-weight:900}.admin-brand-meta small{display:block;margin-top:6px;color:rgba(255,255,255,.62);font-size:16px}.admin-mode-pill{display:flex;align-items:center;gap:13px;height:58px;padding:0 18px;border-radius:16px;border:1px solid rgba(192,132,252,.58);background:rgba(11,18,38,.72);color:#fff;font-weight:900;font-size:18px}.admin-mode-pill i{font-size:22px;color:#fff}.admin-exit-card{display:flex;align-items:center;gap:18px;text-decoration:none;color:#fff;border:1px solid rgba(192,132,252,.56);border-radius:22px;padding:18px 20px;background:linear-gradient(180deg,rgba(43,17,79,.74),rgba(10,17,38,.88));box-shadow:0 0 34px rgba(168,85,247,.14)}.admin-exit-icon{width:66px;height:66px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,#6d28d9,#8b5cf6)}.admin-exit-icon i{font-size:38px;color:#fff}.admin-exit-content b{display:block;font-size:21px;font-weight:900;line-height:1.1}.admin-exit-content small{display:block;margin-top:8px;color:rgba(255,255,255,.63);font-size:16px}.admin-sidebar-group{display:flex;flex-direction:column;gap:16px}.admin-sidebar-title{font-size:16px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:#c084fc;margin-top:4px}.admin-sidebar-item{display:flex;align-items:center;justify-content:space-between;gap:14px;text-decoration:none;color:#fff}.admin-sidebar-item-left{display:flex;align-items:center;gap:18px;min-width:0}.admin-sidebar-item-icon{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;background:linear-gradient(180deg,rgba(20,27,54,.95),rgba(8,13,31,.92));border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(139,92,246,.08),0 12px 26px rgba(0,0,0,.24)}.admin-sidebar-item-icon i{font-size:31px;color:#c084fc}.admin-sidebar-item-text span{display:block;font-size:21px;font-weight:850;color:#fff;line-height:1.1}.admin-sidebar-item-text small{display:block;margin-top:7px;color:rgba(255,255,255,.54);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}.admin-sidebar-item-arrow{font-size:30px;color:rgba(255,255,255,.55)}.admin-sidebar-footer-card{display:flex;gap:16px;align-items:center;margin-top:8px;padding:16px;border-top:1px solid rgba(255,255,255,.08);border-radius:18px;background:linear-gradient(180deg,rgba(17,24,39,.52),rgba(8,15,34,.82));border:1px solid rgba(255,255,255,.06)}.admin-sidebar-footer-icon{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;background:rgba(124,58,237,.16);border:1px solid rgba(192,132,252,.26)}.admin-sidebar-footer-icon i{font-size:30px;color:#c084fc}.admin-sidebar-footer-text b{display:block;color:#fff;font-weight:900;font-size:16px}.admin-sidebar-footer-text small{display:block;color:rgba(255,255,255,.58);line-height:1.35;margin-top:5px;font-size:14px}@media(max-width:980px){.area-admin .sidebar{width:82vw;max-width:360px}.area-admin .main{margin-left:0}.admin-brand-avatar,.admin-brand-logo{width:62px;height:62px}.admin-brand-meta b{font-size:19px}.admin-exit-icon{width:58px;height:58px}.admin-exit-content b{font-size:19px}.admin-sidebar-item-icon{width:54px;height:54px}.admin-sidebar-item-text span{font-size:18px}}
+
+/* Modo claro para el sidebar admin */
+body.light.area-admin .sidebar{
+  background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(245,247,255,.96))!important;
+  border-right:1px solid rgba(139,92,246,.22)!important;
+  box-shadow:18px 0 70px rgba(15,23,42,.12)!important;
+}
+body.light .admin-brand-meta b{color:#0f172a}
+body.light .admin-brand-meta small{color:rgba(15,23,42,.6)}
+body.light .admin-mode-pill{
+  background:rgba(243,232,255,.78);
+  border-color:rgba(124,58,237,.4);
+  color:#1e1b4b;
+}
+body.light .admin-mode-pill i{color:#6d28d9}
+body.light .admin-exit-card{
+  background:linear-gradient(180deg,rgba(243,232,255,.86),rgba(255,255,255,.96));
+  border-color:rgba(124,58,237,.38);
+  color:#1e1b4b;
+  box-shadow:0 0 28px rgba(168,85,247,.16);
+}
+body.light .admin-exit-content small{color:rgba(15,23,42,.6)}
+body.light .admin-sidebar-title{color:#6d28d9}
+body.light .admin-sidebar-item{color:#1e1b4b}
+body.light .admin-sidebar-item-icon{
+  background:linear-gradient(180deg,rgba(243,232,255,.92),rgba(232,232,255,.78));
+  border:1px solid rgba(139,92,246,.18);
+  box-shadow:inset 0 0 0 1px rgba(139,92,246,.12),0 8px 18px rgba(15,23,42,.06);
+}
+body.light .admin-sidebar-item-icon i{color:#7c3aed}
+body.light .admin-sidebar-item-text span{color:#0f172a}
+body.light .admin-sidebar-item-text small{color:rgba(15,23,42,.55)}
+body.light .admin-sidebar-item-arrow{color:rgba(15,23,42,.45)}
+body.light .admin-sidebar-footer-card{
+  background:linear-gradient(180deg,rgba(243,232,255,.5),rgba(255,255,255,.9));
+  border:1px solid rgba(139,92,246,.16);
+  border-top-color:rgba(139,92,246,.18);
+}
+body.light .admin-sidebar-footer-icon{
+  background:rgba(124,58,237,.12);
+  border-color:rgba(192,132,252,.36);
+}
+body.light .admin-sidebar-footer-icon i{color:#7c3aed}
+body.light .admin-sidebar-footer-text b{color:#0f172a}
+body.light .admin-sidebar-footer-text small{color:rgba(15,23,42,.55)}
