@@ -229,7 +229,7 @@ html body .topbar .mobile-menu{display:none!important}
     height:40px!important;
     min-width:40px!important;
   }
-  html body .topbar .user-chip>div{display:none!important}
+  html body .topbar .user-chip>div:not(.user-chip-menu){display:none!important}
 
   /* Espacio para el topbar fijo */
   html body.area-admin .content,
