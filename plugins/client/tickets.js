@@ -63,7 +63,15 @@ function saveAttachment(file){
   const dir = path.join(process.cwd(),"uploads","tickets");
   if(!fs.existsSync(dir)) fs.mkdirSync(dir,{recursive:true});
   const name = Date.now()+"-"+crypto.randomBytes(4).toString("hex")+ext;
-  fs.writeFileSync(path.join(dir,name),file.data);
+  const dest = path.join(dir,name);
+  if (file.tempFilePath) {
+    try { fs.renameSync(file.tempFilePath, dest); }
+    catch(e){ fs.copyFileSync(file.tempFilePath, dest); try{ fs.unlinkSync(file.tempFilePath); }catch(_){} }
+  } else if (file.data && file.data.length) {
+    fs.writeFileSync(dest, file.data);
+  } else {
+    return null;
+  }
   return { path: "/uploads/tickets/"+name, type };
 }
 function statusLabel(s){return ({open:"Abierto",pending:"En proceso",solved:"Resuelto",closed:"Cerrado"})[s]||s;}
