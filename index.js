@@ -472,11 +472,13 @@ app.get("/", (req, res) => {
   const dbu = db.getUserById(user.id) || user;
   const fullName = `${dbu.first_name||dbu.username||""} ${dbu.last_name||""}`.trim() || dbu.email || "amigo";
   const initial = String(fullName).trim().charAt(0).toUpperCase() || "U";
-  const userAvatar = dbu.avatar_path || "";
+  const siteName = db.getSetting("site_name", "SKY ULTRA PLUS shop");
+  const siteLogo = db.getSetting("site_logo", "");
+  const siteInitial = String(siteName).trim().charAt(0).toUpperCase() || "S";
   const h = (v)=>layout.escapeHtml(v||"");
-  const heroAvatar = userAvatar
-    ? `<img src="${h(userAvatar)}" alt="${h(fullName)}" class="cd-hero-avatar-img">`
-    : h(initial);
+  const heroAvatar = siteLogo
+    ? `<img src="${h(siteLogo)}" alt="${h(siteName)}" class="cd-hero-avatar-img">`
+    : h(siteInitial);
 
   // Stats personales
   let svcActive=0,invPending=0,wallet=0,tkOpen=0;
