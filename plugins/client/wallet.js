@@ -1,0 +1,5 @@
+"use strict";
+const express = require("express");
+const config = { key: "client_wallet", name: "Mis créditos", icon: "ri-wallet-3-line", route: "/wallet", area: "client", category: "Facturación", order: 20 };
+function router(ctx) { const r = express.Router(); r.get("/", (req,res)=>{ const w = ctx.db.getWallet(req.session.user.id); const tx = ctx.db.sqlite.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 20").all(req.session.user.id); const rows = tx.map(x=>`<tr><td>${x.type}</td><td>${Number(x.amount).toFixed(2)}</td><td>${Number(x.balance_after).toFixed(2)}</td><td>${x.created_at}</td></tr>`).join(""); res.renderPage({ title:"Mis créditos", area:"client", registry: require("../../core/pluginLoader").registry(ctx.db), content:`<div class="card"><h1>Saldo: ${w.currency} ${Number(w.balance).toFixed(2)}</h1><p>Próximo paso: recargar créditos con factura tipo credit_topup.</p></div><div class="card"><h2>Movimientos</h2><table><tbody>${rows || "<tr><td>Sin movimientos.</td></tr>"}</tbody></table></div>`}); }); return r; }
+module.exports = { config, router };
