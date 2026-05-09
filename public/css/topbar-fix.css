@@ -271,7 +271,7 @@ html body .topbar .user-chip-menu{
   right:0;
   z-index:500;
   min-width:240px;
-  display:none;
+  display:none!important;
   flex-direction:column;
   border-radius:14px;
   background:linear-gradient(145deg,rgba(13,18,38,.98),rgba(10,14,28,.95));
@@ -285,7 +285,7 @@ html body.light .topbar .user-chip-menu{
   border-color:rgba(124,58,237,.22);
   box-shadow:0 18px 40px rgba(15,23,42,.18);
 }
-html body .topbar .user-chip.open .user-chip-menu{display:flex}
+html body .topbar .user-chip.open .user-chip-menu{display:flex!important}
 html body .topbar .user-chip-menu-head{
   display:flex;
   align-items:center;
