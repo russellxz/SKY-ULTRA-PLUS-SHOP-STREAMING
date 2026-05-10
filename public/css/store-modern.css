@@ -626,23 +626,26 @@
 .sp-detail-info-box i{color:var(--acc);font-size:17px;flex-shrink:0;margin-top:1px}
 
 /* =============== RESPONSIVE =============== */
+/* Sidebar vertical SIEMPRE a la izquierda, solo cambia de ancho */
 @media(max-width:980px){
-  .sp-layout{grid-template-columns:1fr}
-  .sp-cats{
-    position:static;
-    flex-direction:row;
-    flex-wrap:nowrap;
-    overflow-x:auto;
-    padding:10px;
-    gap:6px;
-    -webkit-overflow-scrolling:touch;
-  }
-  .sp-cats-head{display:none}
-  .sp-cat-item{flex:0 0 auto;min-width:auto;padding:8px 12px}
+  .sp-layout{grid-template-columns:110px minmax(0,1fr);gap:10px}
+  .sp-cats{padding:8px 6px}
+  .sp-cat-item{font-size:11.5px;padding:8px 6px}
+  .sp-cat-star{font-size:9.5px}
+  .sp-cats-head i{width:28px;height:28px;font-size:14px}
   .sp-detail{grid-template-columns:1fr}
   .sp-detail-info h1{font-size:24px}
   .sp-hero-content{padding:22px 20px}
   .sp-hero-title{font-size:24px}
+}
+@media(max-width:680px){
+  .sp-layout{grid-template-columns:88px minmax(0,1fr);gap:8px}
+  .sp-cats{padding:6px 4px}
+  .sp-cat-item{font-size:10.5px;padding:7px 4px;gap:3px}
+  .sp-cat-star{font-size:9px}
+  .sp-cat-name{font-size:10.5px}
+  .sp-cats-head{padding:4px 0 8px}
+  .sp-cats-head i{width:24px;height:24px;font-size:12px}
 }
 @media(max-width:560px){
   .sp-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -657,6 +660,11 @@
   .sp-hero-title{font-size:22px}
   .sp-hero-desc{font-size:12.5px}
 }
-@media(max-width:380px){
-  .sp-grid{grid-template-columns:1fr}
+@media(max-width:430px){
+  .sp-layout{grid-template-columns:72px minmax(0,1fr);gap:6px}
+  .sp-grid{grid-template-columns:1fr;gap:10px}
+  .sp-cats{padding:6px 3px}
+  .sp-cat-item{padding:6px 2px;font-size:9.5px}
+  .sp-cat-star{display:none}
+  .sp-cat-name{font-size:10px}
 }
