@@ -473,11 +473,7 @@ app.get("/", (req, res) => {
   const fullName = `${dbu.first_name||dbu.username||""} ${dbu.last_name||""}`.trim() || dbu.email || "amigo";
   const siteName = db.getSetting("site_name", "SKY ULTRA PLUS shop");
   const siteLogo = db.getSetting("site_logo", "");
-  const siteInitial = String(siteName).trim().charAt(0).toUpperCase() || "S";
   const h = (v)=>layout.escapeHtml(v||"");
-  const headerLogo = siteLogo
-    ? `<img src="${h(siteLogo)}" alt="${h(siteName)}" class="cd-store-logo-img">`
-    : h(siteInitial);
 
   // Marketing settings (admin)
   const mkImage = db.getSetting("home_marketing_image", "");
@@ -618,11 +614,6 @@ app.get("/", (req, res) => {
 <div class="cd-dash">
   ${welcomeNotice}
   ${verifyBanner}
-
-  <section class="cd-store-brand">
-    <div class="cd-store-brand-logo">${headerLogo}</div>
-    <h1 class="display-title cd-store-brand-name">${h(siteName)}</h1>
-  </section>
 
   ${marketingCard}
 
