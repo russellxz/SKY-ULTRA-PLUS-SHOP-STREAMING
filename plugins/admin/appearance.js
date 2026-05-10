@@ -5,7 +5,7 @@ const fs=require("fs");
 const crypto=require("crypto");
 
 const config={key:"admin_appearance",name:"Apariencia",icon:"ri-palette-line",route:"/admin/appearance",area:"admin",category:"Sistema",permission:"admin",order:10};
-const DEF={site_name:"SKY ULTRA PLUS shop",theme_dark_bg:"#050508",theme_dark_card:"#101426",theme_dark_text:"#e9f2ff",theme_dark_muted:"#9aa6bd",theme_dark_accent:"#8b2cff",theme_dark_accent_2:"#d946ef",theme_dark_border:"#7c3aed",theme_dark_topbar:"#111827",theme_dark_nav:"#0b1020",theme_dark_button:"#7c3aed",theme_dark_danger:"#ef4444",theme_light_bg:"#b7f4f2",theme_light_card:"#ffffff",theme_light_text:"#102033",theme_light_muted:"#536173",theme_light_accent:"#2563eb",theme_light_accent_2:"#7c3aed",theme_light_border:"#8b5cf6",theme_light_topbar:"#dff9ff",theme_light_nav:"#ffffff",theme_light_button:"#2563eb",theme_light_danger:"#dc2626",ui_radius:"22",ui_glow_strength:"35",ui_card_opacity:"82",site_bg_blur:"0",site_bg_overlay:"38",show_background_grid:"1",admin_effect_dark:"electric",admin_effect_light:"rain",client_effect_dark:"stars",client_effect_light:"thunder"};
+const DEF={site_name:"SKY ULTRA PLUS shop",theme_dark_bg:"#050508",theme_dark_card:"#101426",theme_dark_text:"#e9f2ff",theme_dark_muted:"#9aa6bd",theme_dark_accent:"#8b2cff",theme_dark_accent_2:"#d946ef",theme_dark_border:"#7c3aed",theme_dark_topbar:"#111827",theme_dark_nav:"#0b1020",theme_dark_button:"#7c3aed",theme_dark_danger:"#ef4444",theme_light_bg:"#b7f4f2",theme_light_card:"#ffffff",theme_light_text:"#102033",theme_light_muted:"#536173",theme_light_accent:"#2563eb",theme_light_accent_2:"#7c3aed",theme_light_border:"#8b5cf6",theme_light_topbar:"#dff9ff",theme_light_nav:"#ffffff",theme_light_button:"#2563eb",theme_light_danger:"#dc2626",ui_radius:"22",ui_glow_strength:"35",ui_card_opacity:"82",site_bg_blur:"0",site_bg_overlay:"38",show_background_grid:"1",admin_effect_dark:"electric",admin_effect_light:"rain",client_effect_dark:"stars",client_effect_light:"thunder",home_marketing_title:"Bienvenido a nuestra tienda digital",home_marketing_subtitle:"Descubre productos exclusivos y disfruta de las mejores ofertas. Compra al instante con tus créditos.",home_marketing_cta_label:"Explorar tienda",home_marketing_cta_link:"/store",home_marketing_image:""};
 
 function h(ctx,v){return ctx.layout.escapeHtml(v||"")}
 function reg(ctx){return require("../../core/pluginLoader").registry(ctx.db)}
@@ -115,6 +115,9 @@ function router(ctx){
     const bl=save(req.files?.site_bg_light,"backgrounds");
     if(bl)ctx.db.setSetting("site_bg_light",bl);
     if(req.body.remove_bg_light)ctx.db.setSetting("site_bg_light","");
+    const mk=save(req.files?.home_marketing_image,"marketing");
+    if(mk)ctx.db.setSetting("home_marketing_image",mk);
+    if(req.body.remove_marketing_image)ctx.db.setSetting("home_marketing_image","");
     if(req.headers["x-requested-with"]==="fetch"){
       return res.json({ok:true,settings:Object.fromEntries(Object.keys(DEF).map(k=>[k,ctx.db.getSetting(k,DEF[k])])),site_logo:ctx.db.getSetting("site_logo",""),site_bg_dark:ctx.db.getSetting("site_bg_dark",""),site_bg_light:ctx.db.getSetting("site_bg_light","")});
     }
@@ -173,6 +176,48 @@ function router(ctx){
           ${logo?`<img class="appr-logo-preview" src="${h(ctx,logo)}" alt="logo">`:`<div class="appr-logo-preview">${initial}</div>`}
           <span class="appr-logo-preview-name">${h(ctx,siteName)}</span>
         </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- MARKETING INICIO -->
+  <form class="appr-card" data-section="marketing" method="POST" action="/admin/appearance/save" enctype="multipart/form-data">
+    <input type="hidden" name="__section" value="marketing">
+    <div class="appr-card-head">
+      <div>
+        <h2><i class="ri-megaphone-line"></i> Marketing inicio</h2>
+        <p>Personaliza la tarjeta de bienvenida que ven los usuarios al entrar al inicio.</p>
+      </div>
+      <button class="appr-save-btn"><i class="ri-save-line"></i> Guardar</button>
+    </div>
+    <div class="appr-card-body">
+      <div class="appr-identity">
+        <label class="appr-field">
+          <span>Imagen del banner</span>
+          <input type="file" name="home_marketing_image" accept="image/*">
+          <small class="appr-field-help">PNG, JPG o WEBP. Recomendado 1200x600 horizontal.</small>
+          ${ctx.db.getSetting("home_marketing_image","")?`<label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;margin:6px 0 0"><input type="checkbox" name="remove_marketing_image" value="1" style="width:auto;margin:0"> Quitar imagen actual</label>`:""}
+        </label>
+        <label class="appr-field">
+          <span>Título principal</span>
+          <input name="home_marketing_title" value="${h(ctx,g(ctx.db,"home_marketing_title"))}" placeholder="Bienvenido a nuestra tienda digital">
+          <small class="appr-field-help">Texto grande que aparece encima del subtítulo.</small>
+        </label>
+        <label class="appr-field">
+          <span>Subtítulo / descripción</span>
+          <input name="home_marketing_subtitle" value="${h(ctx,g(ctx.db,"home_marketing_subtitle"))}" placeholder="Descubre productos exclusivos...">
+          <small class="appr-field-help">Texto descriptivo que invita al usuario.</small>
+        </label>
+        <label class="appr-field">
+          <span>Texto del botón</span>
+          <input name="home_marketing_cta_label" value="${h(ctx,g(ctx.db,"home_marketing_cta_label"))}" placeholder="Explorar tienda">
+        </label>
+        <label class="appr-field">
+          <span>Enlace del botón</span>
+          <input name="home_marketing_cta_link" value="${h(ctx,g(ctx.db,"home_marketing_cta_link"))}" placeholder="/store">
+          <small class="appr-field-help">A dónde lleva al usuario al hacer click. Ej: /store, /products</small>
+        </label>
+        ${ctx.db.getSetting("home_marketing_image","")?`<div class="appr-logo-preview-wrap" style="grid-column:1/-1"><img class="appr-logo-preview" style="width:100%;height:auto;max-height:220px;border-radius:18px;object-fit:cover" src="${h(ctx,ctx.db.getSetting("home_marketing_image",""))}" alt=""></div>`:""}
       </div>
     </div>
   </form>
