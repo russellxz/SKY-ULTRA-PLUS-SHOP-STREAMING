@@ -12,8 +12,8 @@ function buyButton(ctx, req, p, available){
   const w = wallet(ctx, req.session.user.id, p.currency);
   const enough = Number(w.balance || 0) >= Number(p.price || 0);
   if (available <= 0) return `<button class="sp-buy-btn" disabled><i class="ri-close-circle-line"></i> Sin stock</button>`;
-  if (!enough) return `<button class="sp-buy-btn" disabled><i class="ri-wallet-3-line"></i> Crédito insuficiente</button><small class="sp-credit-note">Tu crédito ${p.currency} ${billing.money(w.balance)}</small>`;
-  return `<form method="POST" action="/store/product/${p.id}/buy-credit" class="sp-buy-form"><button class="sp-buy-btn"><i class="ri-shopping-cart-2-line"></i> Comprar ahora</button></form><small class="sp-credit-note">Tu crédito ${p.currency} ${billing.money(w.balance)}</small>`;
+  if (!enough) return `<button class="sp-buy-btn" disabled><i class="ri-wallet-3-line"></i> Crédito insuficiente</button>`;
+  return `<form method="POST" action="/store/product/${p.id}/buy-credit" class="sp-buy-form"><button class="sp-buy-btn"><i class="ri-shopping-cart-2-line"></i> Comprar con crédito</button></form>`;
 }
 
 function router(ctx) {
@@ -27,53 +27,136 @@ function router(ctx) {
 
   r.get("/", (req, res) => {
     const cats = ctx.db.sqlite.prepare("SELECT * FROM product_categories WHERE active=1 ORDER BY order_index,id").all();
-    const products = ctx.db.sqlite.prepare("SELECT products.* FROM products INNER JOIN product_categories ON product_categories.id=products.category_id WHERE products.active=1 AND product_categories.active=1 ORDER BY products.id DESC").all();
-    let html = `<link rel="stylesheet" href="/public/css/store-modern.css?v=1"><div class="sp-page-head"><span class="sp-eyebrow"><i class="ri-store-2-line"></i> Tienda</span><h1 class="display-title">Productos digitales</h1><p>Compra con tus créditos disponibles. Al pagar se crea factura, se activa el servicio y se revela la información del producto.</p></div>`;
-    if (req.query.error) html += `<div class="notice error">${h(ctx, req.query.error)}</div>`;
-    if (!products.length) html += `<div class="sp-empty"><i class="ri-shopping-bag-line"></i><b>Sin productos</b><span>Todavía no hay productos disponibles.</span></div>`;
-    for (const c of cats) {
-      const list = products.filter(p => Number(p.category_id) === Number(c.id));
-      if (!list.length) continue;
-      html += `<section class="sp-cat-section" id="cat-${c.id}"><header class="sp-cat-head">${c.image_path?`<div class="sp-cat-img"><img src="${h(ctx,c.image_path)}" alt=""></div>`:`<div class="sp-cat-icon"><i class="${h(ctx,c.icon||'ri-price-tag-3-line')}"></i></div>`}<div class="sp-cat-info"><h2>${h(ctx,c.name)}</h2><span>${list.length} ${list.length===1?'producto':'productos'}</span></div></header><div class="sp-product-grid">`;
-      for (const p of list) {
-        const available = stock(ctx,p.id);
-        const stockBadge = available > 0
-          ? `<span class="sp-stock-badge ok"><i class="ri-checkbox-circle-line"></i> ${available} en stock</span>`
-          : `<span class="sp-stock-badge out"><i class="ri-close-circle-line"></i> Sin stock</span>`;
-        html += `<article class="sp-product">
-          <div class="sp-product-image">
-            ${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-product-image-fallback"><i class="ri-image-2-line"></i></div>`}
-            ${stockBadge}
-          </div>
-          <div class="sp-product-body">
-            <span class="sp-product-cat">${h(ctx,c.name)}</span>
-            <h3 class="display-title">${h(ctx,p.name)}</h3>
-            <p>${h(ctx,p.description)}</p>
-            <div class="sp-product-meta">
-              <span class="sp-meta-pill"><i class="ri-time-line"></i> ${cycleLabel(p)}</span>
-            </div>
-            <div class="sp-product-foot">
-              <div class="sp-product-price"><small>Precio</small><b>${p.currency} ${billing.money(p.price)}</b></div>
-              <a class="sp-details-link" href="/store/product/${p.id}"><i class="ri-information-line"></i> Detalles</a>
-            </div>
-            ${buyButton(ctx, req, p, available)}
-          </div>
-        </article>`;
-      }
-      html += `</div></section>`;
+    // Categorias con conteo
+    const catList = cats.map(c=>{
+      const cnt = ctx.db.sqlite.prepare("SELECT COUNT(*) c FROM products WHERE active=1 AND category_id=?").get(c.id).c;
+      return {...c, count: cnt};
+    });
+
+    // Categoria seleccionada (primero la del query, luego primera con productos, luego primera cualquiera)
+    let selectedId = Number(req.query.cat || 0);
+    let selected = catList.find(c=>Number(c.id)===selectedId);
+    if (!selected) selected = catList.find(c=>c.count>0) || catList[0];
+
+    // Filtro de stock: all, in, out
+    const filter = String(req.query.filter||"all");
+
+    // Productos de la categoria seleccionada
+    let products = [];
+    if (selected) {
+      products = ctx.db.sqlite.prepare("SELECT * FROM products WHERE active=1 AND category_id=? ORDER BY id DESC").all(selected.id);
+      products = products.map(p=>({...p, available: stock(ctx,p.id)}));
+      if (filter==="in") products = products.filter(p=>p.available>0);
+      else if (filter==="out") products = products.filter(p=>p.available<=0);
     }
-    res.renderPage({ title: "Productos", area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: html });
+
+    // Búsqueda
+    const q = String(req.query.q||"").trim().toLowerCase();
+    if (q) products = products.filter(p=>String(p.name||"").toLowerCase().includes(q)||String(p.description||"").toLowerCase().includes(q));
+
+    // Wallets
+    const wUSD = ctx.db.getWallet(req.session.user.id, "USD");
+    const wMXN = ctx.db.getWallet(req.session.user.id, "MXN");
+
+    const err = req.query.error?`<div class="notice error">${h(ctx,req.query.error)}</div>`:"";
+
+    const tabUrl = (f)=>{
+      const params=new URLSearchParams();
+      if(selected)params.set("cat",selected.id);
+      if(f&&f!=="all")params.set("filter",f);
+      if(q)params.set("q",q);
+      const s=params.toString();
+      return "/store"+(s?"?"+s:"");
+    };
+    const catUrl = (id)=>{
+      const params=new URLSearchParams();
+      params.set("cat",id);
+      if(filter&&filter!=="all")params.set("filter",filter);
+      const s=params.toString();
+      return "/store"+(s?"?"+s:"");
+    };
+
+    let categoriesHtml = `<aside class="sp-cats">
+      <div class="sp-cats-head"><i class="ri-folder-3-line"></i><b>Categorías</b></div>
+      ${catList.map(c=>{
+        const active = selected && Number(c.id)===Number(selected.id);
+        const ico = c.icon || 'ri-price-tag-3-line';
+        return `<a class="sp-cat-item${active?' active':''}" href="${catUrl(c.id)}"><div class="sp-cat-item-ico">${c.image_path?`<img src="${h(ctx,c.image_path)}" alt="">`:`<i class="${h(ctx,ico)}"></i>`}</div><div class="sp-cat-item-text"><b>${h(ctx,c.name)}</b><small>${c.count} ${c.count===1?'producto':'productos'}</small></div></a>`;
+      }).join("")}
+    </aside>`;
+
+    const headerImage = selected
+      ? (selected.image_path
+          ? `<img src="${h(ctx,selected.image_path)}" alt="">`
+          : `<i class="${h(ctx,selected.icon||'ri-store-2-line')}"></i>`)
+      : `<i class="ri-store-2-line"></i>`;
+
+    const headHtml = `
+    <div class="sp-head">
+      <div class="sp-head-back"><a href="/"><i class="ri-arrow-left-line"></i></a><span class="sp-head-eyebrow">TIENDA</span></div>
+      <div class="sp-head-main">
+        <div class="sp-head-text">
+          <h1 class="display-title">${h(ctx,selected?selected.name:"Productos")}</h1>
+          <p>${h(ctx,(selected&&selected.description)||"Productos digitales listos para comprar con crédito. Acceso rápido, entrega automática y stock visible.")}</p>
+          <div class="sp-credits">
+            <span class="sp-credit-pill"><span class="sp-credit-cur">MXN</span><b>$${billing.money(wMXN.balance)}</b></span>
+            <span class="sp-credit-pill"><span class="sp-credit-cur">USD</span><b>$${billing.money(wUSD.balance)}</b></span>
+          </div>
+        </div>
+        <div class="sp-head-icon">${headerImage}</div>
+      </div>
+      <form class="sp-search-row" method="GET" action="/store">
+        ${selected?`<input type="hidden" name="cat" value="${selected.id}">`:""}
+        ${filter&&filter!=="all"?`<input type="hidden" name="filter" value="${h(ctx,filter)}">`:""}
+        <div class="sp-search"><i class="ri-search-line"></i><input name="q" value="${h(ctx,q)}" placeholder="Buscar productos..."></div>
+        <button class="sp-search-btn" type="submit"><i class="ri-search-line"></i></button>
+      </form>
+      <div class="sp-tabs">
+        <a class="sp-tab${filter==="all"?" active":""}" href="${tabUrl("all")}">Todos</a>
+        <a class="sp-tab${filter==="in"?" active":""}" href="${tabUrl("in")}"><i class="ri-checkbox-circle-line"></i> En stock</a>
+        <a class="sp-tab${filter==="out"?" active":""}" href="${tabUrl("out")}"><i class="ri-close-circle-line"></i> Agotado</a>
+      </div>
+    </div>`;
+
+    const productsHtml = products.length ? products.map(p=>{
+      const w = wallet(ctx, req.session.user.id, p.currency);
+      const enough = Number(w.balance || 0) >= Number(p.price || 0);
+      const stockBadge = p.available > 0
+        ? `<span class="sp-card-pill stock-ok"><i class="ri-checkbox-circle-line"></i> Stock ${p.available}</span>`
+        : `<span class="sp-card-pill stock-out"><i class="ri-close-circle-line"></i> Agotado</span>`;
+      return `<article class="sp-card">
+        <div class="sp-card-img">
+          ${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-card-img-fallback"><i class="ri-image-2-line"></i></div>`}
+        </div>
+        <div class="sp-card-body">
+          <h3 class="display-title">${h(ctx,p.name)}</h3>
+          <p>${h(ctx,p.description)}</p>
+          <div class="sp-card-pills">
+            ${stockBadge}
+            <span class="sp-card-pill price">${h(ctx,p.currency)} $${billing.money(p.price)}</span>
+          </div>
+          ${p.available>0&&!enough?`<small class="sp-card-warn"><i class="ri-error-warning-line"></i> Sin crédito ${p.currency}</small>`:""}
+          ${buyButton(ctx, req, p, p.available)}
+        </div>
+      </article>`;
+    }).join("") + `<article class="sp-card sp-card-soon"><div class="sp-card-soon-inner"><i class="ri-shopping-bag-3-line"></i><b>Más productos próximamente</b></div></article>` : `<div class="sp-empty"><i class="ri-shopping-bag-line"></i><b>Sin productos</b><span>Esta categoría no tiene productos disponibles${filter!=="all"?" con ese filtro":""}.</span></div>`;
+
+    const html = `<link rel="stylesheet" href="/public/css/store-modern.css?v=2">${err}<div class="sp-page">${headHtml}<div class="sp-layout">${categoriesHtml}<main class="sp-products"><div class="sp-grid">${productsHtml}</div></main></div></div>`;
+
+    res.renderPage({ title: selected?selected.name:"Productos", area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: html });
   });
 
   r.get("/product/:id", (req, res) => {
-    const p = ctx.db.sqlite.prepare("SELECT products.*, product_categories.name as cat_name FROM products INNER JOIN product_categories ON product_categories.id=products.category_id WHERE products.id=? AND products.active=1 AND product_categories.active=1").get(req.params.id);
+    const p = ctx.db.sqlite.prepare("SELECT products.*, product_categories.name as cat_name, product_categories.id as cat_id FROM products INNER JOIN product_categories ON product_categories.id=products.category_id WHERE products.id=? AND products.active=1 AND product_categories.active=1").get(req.params.id);
     if (!p) return res.redirect("/store");
     const available = stock(ctx,p.id);
     const err = req.query.error ? `<div class="notice error">${h(ctx, req.query.error)}</div>` : "";
     const stockBadge = available > 0
-      ? `<span class="sp-stock-badge ok"><i class="ri-checkbox-circle-line"></i> ${available} en stock</span>`
-      : `<span class="sp-stock-badge out"><i class="ri-close-circle-line"></i> Sin stock</span>`;
-    res.renderPage({ title: p.name, area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: `<link rel="stylesheet" href="/public/css/store-modern.css?v=1">${err}<div class="sp-detail"><div class="sp-detail-image">${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-product-image-fallback"><i class="ri-image-2-line"></i></div>`}${stockBadge}</div><div class="sp-detail-info"><a class="sp-back-link" href="/store"><i class="ri-arrow-left-line"></i> Volver a la tienda</a><span class="sp-product-cat">${h(ctx,p.cat_name||'Producto')}</span><h1 class="display-title">${h(ctx,p.name)}</h1><p class="sp-detail-desc">${h(ctx,p.description)}</p><div class="sp-product-meta"><span class="sp-meta-pill"><i class="ri-time-line"></i> ${cycleLabel(p)}</span></div><div class="sp-detail-price"><small>Precio</small><b>${p.currency} ${billing.money(p.price)}</b></div><div class="sp-detail-info-box"><i class="ri-information-line"></i> Al pagar con crédito se genera una factura pagada, se activa el servicio y se revela la información del stock.</div>${buyButton(ctx, req, p, available)}</div></div>` });
+      ? `<span class="sp-card-pill stock-ok"><i class="ri-checkbox-circle-line"></i> Stock ${available}</span>`
+      : `<span class="sp-card-pill stock-out"><i class="ri-close-circle-line"></i> Agotado</span>`;
+    const wUSD = ctx.db.getWallet(req.session.user.id, "USD");
+    const wMXN = ctx.db.getWallet(req.session.user.id, "MXN");
+    res.renderPage({ title: p.name, area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: `<link rel="stylesheet" href="/public/css/store-modern.css?v=2">${err}<div class="sp-detail-page"><a class="sp-back-link" href="/store?cat=${p.cat_id}"><i class="ri-arrow-left-line"></i> Volver a ${h(ctx,p.cat_name||'tienda')}</a><div class="sp-detail"><div class="sp-detail-image">${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-card-img-fallback"><i class="ri-image-2-line"></i></div>`}</div><div class="sp-detail-info"><span class="sp-product-cat">${h(ctx,p.cat_name||'Producto')}</span><h1 class="display-title">${h(ctx,p.name)}</h1><p class="sp-detail-desc">${h(ctx,p.description)}</p><div class="sp-card-pills">${stockBadge}<span class="sp-card-pill cycle"><i class="ri-time-line"></i> ${cycleLabel(p)}</span></div><div class="sp-detail-price"><small>Precio</small><b>${p.currency} $${billing.money(p.price)}</b></div><div class="sp-credits"><span class="sp-credit-pill"><span class="sp-credit-cur">MXN</span><b>$${billing.money(wMXN.balance)}</b></span><span class="sp-credit-pill"><span class="sp-credit-cur">USD</span><b>$${billing.money(wUSD.balance)}</b></span></div><div class="sp-detail-info-box"><i class="ri-information-line"></i> Al pagar con crédito se genera una factura pagada, se activa el servicio y se revela la información del stock.</div>${buyButton(ctx, req, p, available)}</div></div></div>` });
   });
   return r;
 }
