@@ -5,7 +5,7 @@ const fs=require("fs");
 const crypto=require("crypto");
 
 const config={key:"admin_appearance",name:"Apariencia",icon:"ri-palette-line",route:"/admin/appearance",area:"admin",category:"Sistema",permission:"admin",order:10};
-const DEF={site_name:"SKY ULTRA PLUS shop",theme_dark_bg:"#050508",theme_dark_card:"#101426",theme_dark_text:"#e9f2ff",theme_dark_muted:"#9aa6bd",theme_dark_accent:"#8b2cff",theme_dark_border:"#7c3aed",theme_dark_topbar:"#111827",theme_dark_nav:"#0b1020",theme_dark_button:"#7c3aed",theme_dark_danger:"#ef4444",theme_light_bg:"#b7f4f2",theme_light_card:"#ffffff",theme_light_text:"#102033",theme_light_muted:"#536173",theme_light_accent:"#2563eb",theme_light_border:"#8b5cf6",theme_light_topbar:"#dff9ff",theme_light_nav:"#ffffff",theme_light_button:"#2563eb",theme_light_danger:"#dc2626",ui_radius:"22",ui_glow_strength:"35",ui_card_opacity:"82",site_bg_blur:"0",site_bg_overlay:"38",show_background_grid:"1",admin_effect_dark:"electric",admin_effect_light:"rain",client_effect_dark:"stars",client_effect_light:"thunder"};
+const DEF={site_name:"SKY ULTRA PLUS shop",theme_dark_bg:"#050508",theme_dark_card:"#101426",theme_dark_text:"#e9f2ff",theme_dark_muted:"#9aa6bd",theme_dark_accent:"#8b2cff",theme_dark_accent_2:"#d946ef",theme_dark_border:"#7c3aed",theme_dark_topbar:"#111827",theme_dark_nav:"#0b1020",theme_dark_button:"#7c3aed",theme_dark_danger:"#ef4444",theme_light_bg:"#b7f4f2",theme_light_card:"#ffffff",theme_light_text:"#102033",theme_light_muted:"#536173",theme_light_accent:"#2563eb",theme_light_accent_2:"#7c3aed",theme_light_border:"#8b5cf6",theme_light_topbar:"#dff9ff",theme_light_nav:"#ffffff",theme_light_button:"#2563eb",theme_light_danger:"#dc2626",ui_radius:"22",ui_glow_strength:"35",ui_card_opacity:"82",site_bg_blur:"0",site_bg_overlay:"38",show_background_grid:"1",admin_effect_dark:"electric",admin_effect_light:"rain",client_effect_dark:"stars",client_effect_light:"thunder"};
 
 function h(ctx,v){return ctx.layout.escapeHtml(v||"")}
 function reg(ctx){return require("../../core/pluginLoader").registry(ctx.db)}
@@ -32,6 +32,7 @@ const COLORS_DARK=[
   ["theme_dark_text","Texto principal","Titulos y textos importantes.","ri-text"],
   ["theme_dark_muted","Texto secundario","Descripciones, ayudas y textos suaves.","ri-quote-text"],
   ["theme_dark_accent","Color acento","Botones, enlaces, detalles neon y seleccion.","ri-flashlight-line"],
+  ["theme_dark_accent_2","Color acento 2 (gradiente)","Segundo color para gradientes (botones, hero, iconos).","ri-contrast-drop-line"],
   ["theme_dark_border","Bordes y brillo","Bordes de cards, glow y lineas.","ri-magic-line"],
   ["theme_dark_topbar","Barra superior","Color de la cabecera.","ri-layout-top-line"],
   ["theme_dark_nav","Menu lateral/inferior","Color de navegacion.","ri-menu-2-line"],
@@ -44,6 +45,7 @@ const COLORS_LIGHT=[
   ["theme_light_text","Texto principal","Titulos y textos importantes.","ri-text"],
   ["theme_light_muted","Texto secundario","Descripciones, ayudas y textos suaves.","ri-quote-text"],
   ["theme_light_accent","Color acento","Botones, enlaces y seleccion.","ri-flashlight-line"],
+  ["theme_light_accent_2","Color acento 2 (gradiente)","Segundo color para gradientes (botones, hero, iconos).","ri-contrast-drop-line"],
   ["theme_light_border","Bordes y brillo","Bordes de cards, glow y lineas.","ri-magic-line"],
   ["theme_light_topbar","Barra superior","Color de la cabecera.","ri-layout-top-line"],
   ["theme_light_nav","Menu lateral/inferior","Color de navegacion.","ri-menu-2-line"],
@@ -297,10 +299,10 @@ function router(ctx){
     var root=document.documentElement.style;
     var map={
       theme_dark_bg:'--dark-bg',theme_dark_card:'--dark-card',theme_dark_text:'--dark-text',
-      theme_dark_muted:'--dark-muted',theme_dark_accent:'--dark-accent',theme_dark_border:'--dark-border',
+      theme_dark_muted:'--dark-muted',theme_dark_accent:'--dark-accent',theme_dark_accent_2:'--dark-accent-2',theme_dark_border:'--dark-border',
       theme_dark_topbar:'--dark-topbar',theme_dark_nav:'--dark-nav',theme_dark_button:'--dark-button',theme_dark_danger:'--dark-danger',
       theme_light_bg:'--light-bg',theme_light_card:'--light-card',theme_light_text:'--light-text',
-      theme_light_muted:'--light-muted',theme_light_accent:'--light-accent',theme_light_border:'--light-border',
+      theme_light_muted:'--light-muted',theme_light_accent:'--light-accent',theme_light_accent_2:'--light-accent-2',theme_light_border:'--light-border',
       theme_light_topbar:'--light-topbar',theme_light_nav:'--light-nav',theme_light_button:'--light-button',theme_light_danger:'--light-danger'
     };
     if(map[key])root.setProperty(map[key],value);
