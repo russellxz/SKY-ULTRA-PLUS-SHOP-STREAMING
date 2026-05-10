@@ -21,18 +21,70 @@ html body .brand-logo{
 }
 html body .brand-logo-img{border-radius:14px;box-shadow:0 0 22px color-mix(in srgb,var(--acc) 30%,transparent)}
 
-/* Nav items del sidebar */
-html body .nav-item{color:color-mix(in srgb,var(--text) 84%,transparent)}
-html body .nav-item i{color:color-mix(in srgb,var(--text) 70%,transparent)}
-html body .nav-item:hover{
-  background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 32%,transparent),color-mix(in srgb,var(--acc2) 12%,transparent))!important;
-  border-color:color-mix(in srgb,var(--acc) 45%,transparent)!important;
-  color:#fff!important;
-  box-shadow:0 0 24px color-mix(in srgb,var(--acc) 18%,transparent)!important;
+/* Sidebar - secciones y nav items */
+html body .sidebar nav{display:flex;flex-direction:column;gap:2px}
+html body .nav-group{
+  padding:6px 0;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  position:relative;
 }
-html body.light .nav-item:hover{color:var(--acc)!important}
-html body.light .nav-item:hover i{color:var(--acc)}
-html body .nav-title{color:color-mix(in srgb,var(--text) 70%,transparent)}
+html body .nav-group + .nav-group{
+  border-top:1px solid color-mix(in srgb,var(--acc) 14%,transparent)!important;
+  margin-top:6px;
+  padding-top:10px;
+}
+html body.light .nav-group + .nav-group{
+  border-top-color:color-mix(in srgb,var(--acc) 12%,transparent)!important;
+}
+html body .nav-title{
+  font-size:11px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:color-mix(in srgb,var(--text) 55%,transparent)!important;
+  padding:0 8px 4px;
+  margin:0!important;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  opacity:1!important;
+}
+html body .nav-item{
+  display:flex!important;
+  align-items:center;
+  gap:11px;
+  padding:11px 14px!important;
+  border-radius:12px!important;
+  text-decoration:none;
+  margin:0!important;
+  color:color-mix(in srgb,var(--text) 88%,transparent)!important;
+  border:1px solid transparent!important;
+  font-weight:800;
+  font-size:13.5px;
+  letter-spacing:-.005em;
+  transition:background .15s,color .15s,transform .15s,border-color .15s;
+}
+html body .nav-item i{
+  font-size:17px!important;
+  width:22px;
+  text-align:center;
+  flex:0 0 22px;
+  color:var(--acc)!important;
+}
+html body .nav-item:hover{
+  background:color-mix(in srgb,var(--acc) 16%,transparent)!important;
+  border-color:color-mix(in srgb,var(--acc) 28%,transparent)!important;
+  color:var(--acc)!important;
+  transform:translateX(2px);
+  box-shadow:none!important;
+}
+html body .nav-item:hover i{color:var(--acc)!important}
+html body.light .nav-item:hover{
+  background:color-mix(in srgb,var(--acc) 10%,transparent)!important;
+  color:var(--acc)!important;
+}
 
 /* Botones primarios y acciones del topbar */
 html body .top-actions a:not(.theme-toggle):not(.user-chip),
