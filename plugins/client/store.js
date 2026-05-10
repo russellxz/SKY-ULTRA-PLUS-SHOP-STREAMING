@@ -34,7 +34,7 @@ function router(ctx) {
     for (const c of cats) {
       const list = products.filter(p => Number(p.category_id) === Number(c.id));
       if (!list.length) continue;
-      html += `<div class="store-category-head">${c.image_path?`<img src="${h(ctx,c.image_path)}">`:`<i class="${h(ctx,c.icon)}"></i>`}<h2>${h(ctx,c.name)}</h2></div><div class="grid cards-3">`;
+      html += `<div class="store-category-head" id="cat-${c.id}">${c.image_path?`<img src="${h(ctx,c.image_path)}">`:`<i class="${h(ctx,c.icon)}"></i>`}<h2>${h(ctx,c.name)}</h2></div><div class="grid cards-3">`;
       for (const p of list) {
         const available = stock(ctx,p.id);
         html += `<div class="card product-card">${p.image_path?`<img class="product-img" src="${h(ctx,p.image_path)}">`:""}<b>${h(ctx,p.name)}</b><p>${h(ctx,p.description)}</p><div class="product-meta"><span>${cycleLabel(p)}</span><span>Stock: ${available}</span><span>${p.currency} ${billing.money(p.price)}</span></div>${buyButton(ctx, req, p, available)}<a class="btn ghost" href="/store/product/${p.id}">Ver detalles</a></div>`;

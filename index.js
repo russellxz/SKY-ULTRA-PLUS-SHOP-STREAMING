@@ -471,30 +471,38 @@ app.get("/", (req, res) => {
   const user = req.session.user;
   const dbu = db.getUserById(user.id) || user;
   const fullName = `${dbu.first_name||dbu.username||""} ${dbu.last_name||""}`.trim() || dbu.email || "amigo";
-  const initial = String(fullName).trim().charAt(0).toUpperCase() || "U";
   const siteName = db.getSetting("site_name", "SKY ULTRA PLUS shop");
   const siteLogo = db.getSetting("site_logo", "");
   const siteInitial = String(siteName).trim().charAt(0).toUpperCase() || "S";
   const h = (v)=>layout.escapeHtml(v||"");
-  const heroAvatar = siteLogo
-    ? `<img src="${h(siteLogo)}" alt="${h(siteName)}" class="cd-hero-avatar-img">`
+  const headerLogo = siteLogo
+    ? `<img src="${h(siteLogo)}" alt="${h(siteName)}" class="cd-store-logo-img">`
     : h(siteInitial);
+
+  // Marketing settings (admin)
+  const mkImage = db.getSetting("home_marketing_image", "");
+  const mkTitle = db.getSetting("home_marketing_title", "Bienvenido a nuestra tienda digital");
+  const mkSubtitle = db.getSetting("home_marketing_subtitle", "Descubre productos exclusivos y disfruta de las mejores ofertas. Compra al instante con tus créditos.");
+  const mkCtaLabel = db.getSetting("home_marketing_cta_label", "Explorar tienda");
+  const mkCtaLink = db.getSetting("home_marketing_cta_link", "/store");
+
+  // Categorías activas con productos
+  let categories = [];
+  try{
+    categories = db.sqlite.prepare("SELECT * FROM product_categories WHERE active=1 ORDER BY order_index,id").all();
+  }catch{}
+  const catWithCount = categories.map(c=>{
+    let count = 0;
+    try{ count = db.sqlite.prepare("SELECT COUNT(*) c FROM products WHERE active=1 AND category_id=?").get(c.id).c; }catch{}
+    return {...c, product_count: count};
+  }).filter(c=>c.product_count>0);
 
   // Stats personales
   let svcActive=0,invPending=0,wallet=0,tkOpen=0;
-  try{
-    svcActive = db.sqlite.prepare("SELECT COUNT(*) c FROM services WHERE user_id=? AND status='active'").get(user.id).c;
-  }catch{}
-  try{
-    invPending = db.sqlite.prepare("SELECT COUNT(*) c FROM invoices WHERE user_id=? AND status='pending'").get(user.id).c;
-  }catch{}
-  try{
-    const w = db.getWallet(user.id, "USD");
-    wallet = Number(w.balance||0);
-  }catch{}
-  try{
-    tkOpen = db.sqlite.prepare("SELECT COUNT(*) c FROM tickets WHERE user_id=? AND status IN ('open','pending')").get(user.id).c;
-  }catch{}
+  try{ svcActive = db.sqlite.prepare("SELECT COUNT(*) c FROM services WHERE user_id=? AND status='active'").get(user.id).c; }catch{}
+  try{ invPending = db.sqlite.prepare("SELECT COUNT(*) c FROM invoices WHERE user_id=? AND status='pending'").get(user.id).c; }catch{}
+  try{ const w = db.getWallet(user.id, "USD"); wallet = Number(w.balance||0); }catch{}
+  try{ tkOpen = db.sqlite.prepare("SELECT COUNT(*) c FROM tickets WHERE user_id=? AND status IN ('open','pending')").get(user.id).c; }catch{}
 
   // Servicios recientes
   let recentServices = [];
@@ -521,7 +529,7 @@ app.get("/", (req, res) => {
   const invStatus = (s)=>({paid:'ok',pending:'pending',suspended:'err',canceled:'err'})[s]||'muted';
 
   const svcRows = recentServices.map(s=>`<a class="cd-list-row" href="/services">
-    <div class="cd-list-icon">${s.image_path?`<img src="${h(s.image_path)}" alt="">`:`<i class="ri-archive-stack-line"></i>`}</div>
+    <div class="cd-list-icon">${s.image_path?`<img src="${h(s.image_path)}" alt="">`:`<i class="ri-stack-line"></i>`}</div>
     <div class="cd-list-text"><b>${h(s.product_name)}</b><small>#${s.id}</small></div>
     <div class="cd-list-side"><b>${h(s.currency)} ${fmtMoney(s.price)}</b><small class="${svcStatus(s.status)}">${h(s.status)}</small></div>
   </a>`).join("") || '<div class="cd-empty-mini">Aún no tienes servicios contratados.</div>';
@@ -535,7 +543,6 @@ app.get("/", (req, res) => {
   const greetHour = new Date().getHours();
   const greet = greetHour < 12 ? "Buenos días" : greetHour < 19 ? "Buenas tardes" : "Buenas noches";
 
-  // Unverified email banner (when verification is OFF in admin but user hasn't verified)
   const isVerified = !!dbu.email_verified;
   const verifyBanner = !isVerified ? `
   <section class="cd-verify-banner">
@@ -556,42 +563,84 @@ app.get("/", (req, res) => {
     <span>¡Bienvenido! Tu cuenta fue creada exitosamente.${!isVerified?" Revisa tu correo para verificar.":""}</span>
   </section>` : "";
 
+  // Marketing card (admin customizable)
+  const marketingCard = `
+  <section class="cd-marketing">
+    <div class="cd-marketing-image" ${mkImage?`style="background-image:url('${h(mkImage)}')"`:''}>
+      ${!mkImage?`<div class="cd-marketing-placeholder"><i class="ri-image-2-line"></i></div>`:''}
+      <div class="cd-marketing-overlay"></div>
+    </div>
+    <div class="cd-marketing-content">
+      <span class="cd-marketing-tag"><i class="ri-sparkling-2-line"></i> ${h(greet)}, ${h(fullName.split(" ")[0])}</span>
+      <h2>${h(mkTitle)}</h2>
+      <p>${h(mkSubtitle)}</p>
+      <a href="${h(mkCtaLink)}" class="cd-marketing-cta">${h(mkCtaLabel)} <i class="ri-arrow-right-line"></i></a>
+    </div>
+  </section>`;
+
+  // Categorías destacadas (cards con imagen, descripción, botón Ver)
+  const categoriesSection = catWithCount.length ? `
+  <section class="cd-categories">
+    <header class="cd-section-head">
+      <div>
+        <span class="cd-section-eyebrow"><i class="ri-store-2-line"></i> Tienda</span>
+        <h2>Categorías destacadas</h2>
+        <p>Explora nuestras categorías y encuentra el producto perfecto.</p>
+      </div>
+      <a href="/store" class="cd-section-link">Ver toda la tienda <i class="ri-arrow-right-line"></i></a>
+    </header>
+    <div class="cd-cat-grid">
+      ${catWithCount.map(c=>`
+        <article class="cd-cat-card">
+          <div class="cd-cat-image">
+            ${c.image_path?`<img src="${h(c.image_path)}" alt="${h(c.name)}">`:`<div class="cd-cat-icon-fallback"><i class="${h(c.icon||'ri-price-tag-3-line')}"></i></div>`}
+            <span class="cd-cat-count">${c.product_count} ${c.product_count===1?'producto':'productos'}</span>
+          </div>
+          <div class="cd-cat-body">
+            <h3>${h(c.name)}</h3>
+            <p>${h(c.description||'Descubre todo lo disponible en esta categoría.')}</p>
+            <a href="/store#cat-${c.id}" class="cd-cat-cta">
+              <i class="ri-eye-line"></i> Ver productos
+            </a>
+          </div>
+        </article>
+      `).join("")}
+    </div>
+  </section>` : '';
+
   res.renderPage({
     title: "Inicio",
     area: "client",
     registry,
     content: `
-<link rel="stylesheet" href="/public/css/client-dashboard.css?v=2">
+<link rel="stylesheet" href="/public/css/client-dashboard.css?v=4">
 <div class="cd-dash">
   ${welcomeNotice}
   ${verifyBanner}
-  <section class="cd-hero">
-    <div class="cd-hero-avatar">${heroAvatar}</div>
-    <div class="cd-hero-text">
-      <span class="greet"><i class="ri-sparkling-2-line"></i> ${greet}</span>
-      <h1>Hola, ${h(fullName.split(" ")[0])} 👋</h1>
-      <p>Bienvenido de vuelta. Aquí tienes un resumen de tu cuenta.</p>
+
+  <section class="cd-store-header">
+    <div class="cd-store-logo">${headerLogo}</div>
+    <div class="cd-store-title">
+      <h1>${h(siteName)}</h1>
+      <p>Tienda digital</p>
     </div>
   </section>
 
+  ${marketingCard}
+
   <section class="cd-stats">
-    <div class="cd-stat svc"><div class="cd-stat-icon"><i class="ri-archive-stack-line"></i></div><div class="cd-stat-value">${svcActive}</div><div class="cd-stat-label">Servicios activos</div></div>
+    <div class="cd-stat svc"><div class="cd-stat-icon"><i class="ri-stack-line"></i></div><div class="cd-stat-value">${svcActive}</div><div class="cd-stat-label">Servicios activos</div></div>
     <div class="cd-stat inv"><div class="cd-stat-icon"><i class="ri-file-list-3-line"></i></div><div class="cd-stat-value">${invPending}</div><div class="cd-stat-label">Facturas pendientes</div></div>
     <div class="cd-stat cred"><div class="cd-stat-icon"><i class="ri-wallet-3-line"></i></div><div class="cd-stat-value">$${fmtMoney(wallet)}</div><div class="cd-stat-label">Crédito disponible</div></div>
     <div class="cd-stat tk"><div class="cd-stat-icon"><i class="ri-customer-service-2-line"></i></div><div class="cd-stat-value">${tkOpen}</div><div class="cd-stat-label">Tickets abiertos</div></div>
   </section>
 
-  <section class="cd-quick">
-    <a class="cd-quick-card" href="/products"><div class="cd-quick-icon"><i class="ri-shopping-bag-3-line"></i></div><div class="cd-quick-text"><strong>Comprar</strong><small>Explora la tienda</small></div></a>
-    <a class="cd-quick-card" href="/services"><div class="cd-quick-icon"><i class="ri-archive-stack-line"></i></div><div class="cd-quick-text"><strong>Mis servicios</strong><small>Estado y renovación</small></div></a>
-    <a class="cd-quick-card" href="/invoices"><div class="cd-quick-icon"><i class="ri-file-list-3-line"></i></div><div class="cd-quick-text"><strong>Mis facturas</strong><small>Histórico y pagos</small></div></a>
-    <a class="cd-quick-card" href="/tickets"><div class="cd-quick-icon"><i class="ri-customer-service-2-line"></i></div><div class="cd-quick-text"><strong>Soporte</strong><small>Habla con nosotros</small></div></a>
-  </section>
+  ${categoriesSection}
 
   <div class="cd-row">
     <section class="cd-block">
       <header class="cd-block-head">
-        <h3><i class="ri-archive-stack-line"></i> Servicios recientes</h3>
+        <h3><i class="ri-stack-line"></i> Servicios recientes</h3>
         <a href="/services">Ver todos <i class="ri-arrow-right-s-line"></i></a>
       </header>
       <div class="cd-list">${svcRows}</div>
