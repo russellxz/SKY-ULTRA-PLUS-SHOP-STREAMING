@@ -203,17 +203,85 @@ html body .theme-toggle:hover{
 }
 html body .theme-toggle i{color:var(--acc)!important;text-shadow:none!important}
 
-/* Mobile menu (hamburguesa) */
+/* Mobile menu (hamburguesa) - cambia con modo claro/oscuro y color de acento */
 html body .mobile-menu{
-  background:color-mix(in srgb,var(--acc) 16%,transparent)!important;
-  border:1px solid color-mix(in srgb,var(--acc) 32%,transparent)!important;
-  color:var(--acc)!important;
+  background:var(--gradient)!important;
+  border:1px solid color-mix(in srgb,var(--acc) 38%,transparent)!important;
+  color:#fff!important;
   border-radius:12px!important;
-  width:42px!important;height:42px!important;
-  display:grid!important;place-items:center!important;
-  box-shadow:none!important;
+  width:46px!important;height:46px!important;
+  display:inline-grid!important;place-items:center!important;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--acc) 35%,transparent)!important;
+  cursor:pointer;
+  flex:0 0 auto;
+  transition:transform .18s,box-shadow .18s;
 }
-html body .mobile-menu i{color:var(--acc)!important;font-size:20px!important}
+html body .mobile-menu:hover{transform:translateY(-1px);box-shadow:0 8px 22px color-mix(in srgb,var(--acc) 45%,transparent)!important}
+html body .mobile-menu i{color:#fff!important;font-size:22px!important;line-height:1!important}
+
+/* Topbar brand: logo + nombre de la tienda (siempre visible en la barra) */
+html body .topbar .topbar-brand{
+  display:inline-flex!important;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+  padding:6px 14px 6px 6px;
+  border-radius:14px;
+  background:transparent;
+  transition:background .18s,transform .18s;
+  flex:0 1 auto;
+  min-width:0;
+  margin-right:auto;
+}
+html body .topbar .topbar-brand:hover{
+  background:color-mix(in srgb,var(--acc) 8%,transparent);
+}
+html body .topbar .topbar-brand-logo{
+  width:42px;height:42px;
+  flex:0 0 auto;
+  border-radius:12px;
+  display:grid;place-items:center;
+  background:var(--gradient);
+  color:#fff;
+  font-weight:900;
+  font-size:18px;
+  overflow:hidden;
+  object-fit:cover;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--acc) 38%,transparent),inset 0 0 0 2px rgba(255,255,255,.16);
+}
+html body .topbar img.topbar-brand-logo{padding:0;display:block}
+html body .topbar .topbar-brand-name{
+  font-size:18px!important;
+  font-weight:900!important;
+  letter-spacing:-.015em!important;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin:0;
+  display:block;
+  min-width:0;
+}
+
+/* Topbar layout: brand a la izquierda, actions a la derecha */
+html body .topbar{
+  display:flex!important;
+  align-items:center!important;
+  gap:14px!important;
+}
+html body .topbar .top-actions{margin-left:auto!important}
+html body .topbar .top-search{display:none!important}
+
+/* Mobile: hamburger + brand sin perder el avatar */
+@media(max-width:560px){
+  html body .topbar .topbar-brand{padding:4px 8px 4px 4px;gap:9px}
+  html body .topbar .topbar-brand-logo{width:36px;height:36px;font-size:16px;border-radius:10px}
+  html body .topbar .topbar-brand-name{font-size:15px!important}
+  html body .mobile-menu{width:42px!important;height:42px!important}
+  html body .mobile-menu i{font-size:20px!important}
+}
+@media(max-width:380px){
+  html body .topbar .topbar-brand-name{display:none!important}
+}
 
 /* Dropdown menu cabecera con buena legibilidad en ambos modos */
 html body .topbar .user-chip-menu-head b{color:var(--text)!important}
