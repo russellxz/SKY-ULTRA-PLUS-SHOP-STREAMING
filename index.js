@@ -498,10 +498,11 @@ app.get("/", (req, res) => {
   }).filter(c=>c.product_count>0);
 
   // Stats personales
-  let svcActive=0,invPending=0,wallet=0,tkOpen=0;
+  let svcActive=0,invPending=0,walletUSD=0,walletMXN=0,tkOpen=0;
   try{ svcActive = db.sqlite.prepare("SELECT COUNT(*) c FROM services WHERE user_id=? AND status='active'").get(user.id).c; }catch{}
   try{ invPending = db.sqlite.prepare("SELECT COUNT(*) c FROM invoices WHERE user_id=? AND status='pending'").get(user.id).c; }catch{}
-  try{ const w = db.getWallet(user.id, "USD"); wallet = Number(w.balance||0); }catch{}
+  try{ const w = db.getWallet(user.id, "USD"); walletUSD = Number(w.balance||0); }catch{}
+  try{ const w = db.getWallet(user.id, "MXN"); walletMXN = Number(w.balance||0); }catch{}
   try{ tkOpen = db.sqlite.prepare("SELECT COUNT(*) c FROM tickets WHERE user_id=? AND status IN ('open','pending')").get(user.id).c; }catch{}
 
   // Servicios recientes
@@ -613,17 +614,14 @@ app.get("/", (req, res) => {
     area: "client",
     registry,
     content: `
-<link rel="stylesheet" href="/public/css/client-dashboard.css?v=4">
+<link rel="stylesheet" href="/public/css/client-dashboard.css?v=5">
 <div class="cd-dash">
   ${welcomeNotice}
   ${verifyBanner}
 
-  <section class="cd-store-header">
-    <div class="cd-store-logo">${headerLogo}</div>
-    <div class="cd-store-title">
-      <h1>${h(siteName)}</h1>
-      <p>Tienda digital</p>
-    </div>
+  <section class="cd-store-brand">
+    <div class="cd-store-brand-logo">${headerLogo}</div>
+    <h1 class="display-title cd-store-brand-name">${h(siteName)}</h1>
   </section>
 
   ${marketingCard}
@@ -631,7 +629,8 @@ app.get("/", (req, res) => {
   <section class="cd-stats">
     <div class="cd-stat svc"><div class="cd-stat-icon"><i class="ri-stack-line"></i></div><div class="cd-stat-value">${svcActive}</div><div class="cd-stat-label">Servicios activos</div></div>
     <div class="cd-stat inv"><div class="cd-stat-icon"><i class="ri-file-list-3-line"></i></div><div class="cd-stat-value">${invPending}</div><div class="cd-stat-label">Facturas pendientes</div></div>
-    <div class="cd-stat cred"><div class="cd-stat-icon"><i class="ri-wallet-3-line"></i></div><div class="cd-stat-value">$${fmtMoney(wallet)}</div><div class="cd-stat-label">Crédito disponible</div></div>
+    <div class="cd-stat cred"><div class="cd-stat-icon"><i class="ri-wallet-3-line"></i></div><div class="cd-stat-value">$${fmtMoney(walletUSD)}</div><div class="cd-stat-label">Crédito USD</div></div>
+    <div class="cd-stat cred mxn"><div class="cd-stat-icon"><i class="ri-wallet-3-line"></i></div><div class="cd-stat-value">$${fmtMoney(walletMXN)}</div><div class="cd-stat-label">Crédito MXN</div></div>
     <div class="cd-stat tk"><div class="cd-stat-icon"><i class="ri-customer-service-2-line"></i></div><div class="cd-stat-value">${tkOpen}</div><div class="cd-stat-label">Tickets abiertos</div></div>
   </section>
 
