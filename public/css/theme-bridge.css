@@ -219,7 +219,7 @@ html body .mobile-menu{
 html body .mobile-menu:hover{transform:translateY(-1px);box-shadow:0 8px 22px color-mix(in srgb,var(--acc) 45%,transparent)!important}
 html body .mobile-menu i{color:#fff!important;font-size:22px!important;line-height:1!important}
 
-/* Topbar brand: logo + nombre de la tienda (siempre visible en la barra) */
+/* Topbar brand: logo + nombre de la tienda (siempre visible, sin interacción) */
 html body .topbar .topbar-brand{
   display:inline-flex!important;
   align-items:center;
@@ -228,13 +228,12 @@ html body .topbar .topbar-brand{
   padding:6px 14px 6px 6px;
   border-radius:14px;
   background:transparent;
-  transition:background .18s,transform .18s;
   flex:0 1 auto;
   min-width:0;
   margin-right:auto;
-}
-html body .topbar .topbar-brand:hover{
-  background:color-mix(in srgb,var(--acc) 8%,transparent);
+  cursor:default;
+  user-select:none;
+  pointer-events:none;
 }
 html body .topbar .topbar-brand-logo{
   width:42px;height:42px;
