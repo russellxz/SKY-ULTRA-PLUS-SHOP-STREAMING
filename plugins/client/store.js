@@ -93,28 +93,28 @@ function router(ctx) {
 
     const headHtml = `
     <div class="sp-head">
-      <div class="sp-head-back"><a href="/"><i class="ri-arrow-left-line"></i></a><span class="sp-head-eyebrow">TIENDA</span></div>
+      <a href="/" class="sp-head-back"><i class="ri-arrow-left-line"></i><span>TIENDA</span></a>
       <div class="sp-head-main">
+        <div class="sp-head-icon">${headerImage}</div>
         <div class="sp-head-text">
           <h1 class="display-title">${h(ctx,selected?selected.name:"Productos")}</h1>
           <p>${h(ctx,(selected&&selected.description)||"Productos digitales listos para comprar con crédito. Acceso rápido, entrega automática y stock visible.")}</p>
-          <div class="sp-credits">
-            <span class="sp-credit-pill"><span class="sp-credit-cur">MXN</span><b>$${billing.money(wMXN.balance)}</b></span>
-            <span class="sp-credit-pill"><span class="sp-credit-cur">USD</span><b>$${billing.money(wUSD.balance)}</b></span>
-          </div>
         </div>
-        <div class="sp-head-icon">${headerImage}</div>
+      </div>
+      <div class="sp-credits">
+        <span class="sp-credit-pill"><span class="sp-credit-cur">Crédito</span><b>MXN $${billing.money(wMXN.balance)}</b></span>
+        <span class="sp-credit-pill"><span class="sp-credit-cur">Crédito</span><b>USD $${billing.money(wUSD.balance)}</b></span>
       </div>
       <form class="sp-search-row" method="GET" action="/store">
         ${selected?`<input type="hidden" name="cat" value="${selected.id}">`:""}
         ${filter&&filter!=="all"?`<input type="hidden" name="filter" value="${h(ctx,filter)}">`:""}
         <div class="sp-search"><i class="ri-search-line"></i><input name="q" value="${h(ctx,q)}" placeholder="Buscar productos..."></div>
-        <button class="sp-search-btn" type="submit"><i class="ri-search-line"></i></button>
+        <button class="sp-search-btn" type="submit" aria-label="Filtrar"><i class="ri-equalizer-line"></i></button>
       </form>
       <div class="sp-tabs">
         <a class="sp-tab${filter==="all"?" active":""}" href="${tabUrl("all")}">Todos</a>
-        <a class="sp-tab${filter==="in"?" active":""}" href="${tabUrl("in")}"><i class="ri-checkbox-circle-line"></i> En stock</a>
-        <a class="sp-tab${filter==="out"?" active":""}" href="${tabUrl("out")}"><i class="ri-close-circle-line"></i> Agotado</a>
+        <a class="sp-tab${filter==="in"?" active":""}" href="${tabUrl("in")}">En stock</a>
+        <a class="sp-tab${filter==="out"?" active":""}" href="${tabUrl("out")}">Agotado</a>
       </div>
     </div>`;
 
@@ -141,7 +141,7 @@ function router(ctx) {
       </article>`;
     }).join("") + `<article class="sp-card sp-card-soon"><div class="sp-card-soon-inner"><i class="ri-shopping-bag-3-line"></i><b>Más productos próximamente</b></div></article>` : `<div class="sp-empty"><i class="ri-shopping-bag-line"></i><b>Sin productos</b><span>Esta categoría no tiene productos disponibles${filter!=="all"?" con ese filtro":""}.</span></div>`;
 
-    const html = `<link rel="stylesheet" href="/public/css/store-modern.css?v=2">${err}<div class="sp-page">${headHtml}<div class="sp-layout">${categoriesHtml}<main class="sp-products"><div class="sp-grid">${productsHtml}</div></main></div></div>`;
+    const html = `<link rel="stylesheet" href="/public/css/store-modern.css?v=3">${err}<div class="sp-page">${headHtml}<div class="sp-layout">${categoriesHtml}<main class="sp-products"><div class="sp-grid">${productsHtml}</div></main></div></div>`;
 
     res.renderPage({ title: selected?selected.name:"Productos", area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: html });
   });
@@ -156,7 +156,7 @@ function router(ctx) {
       : `<span class="sp-card-pill stock-out"><i class="ri-close-circle-line"></i> Agotado</span>`;
     const wUSD = ctx.db.getWallet(req.session.user.id, "USD");
     const wMXN = ctx.db.getWallet(req.session.user.id, "MXN");
-    res.renderPage({ title: p.name, area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: `<link rel="stylesheet" href="/public/css/store-modern.css?v=2">${err}<div class="sp-detail-page"><a class="sp-back-link" href="/store?cat=${p.cat_id}"><i class="ri-arrow-left-line"></i> Volver a ${h(ctx,p.cat_name||'tienda')}</a><div class="sp-detail"><div class="sp-detail-image">${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-card-img-fallback"><i class="ri-image-2-line"></i></div>`}</div><div class="sp-detail-info"><span class="sp-product-cat">${h(ctx,p.cat_name||'Producto')}</span><h1 class="display-title">${h(ctx,p.name)}</h1><p class="sp-detail-desc">${h(ctx,p.description)}</p><div class="sp-card-pills">${stockBadge}<span class="sp-card-pill cycle"><i class="ri-time-line"></i> ${cycleLabel(p)}</span></div><div class="sp-detail-price"><small>Precio</small><b>${p.currency} $${billing.money(p.price)}</b></div><div class="sp-credits"><span class="sp-credit-pill"><span class="sp-credit-cur">MXN</span><b>$${billing.money(wMXN.balance)}</b></span><span class="sp-credit-pill"><span class="sp-credit-cur">USD</span><b>$${billing.money(wUSD.balance)}</b></span></div><div class="sp-detail-info-box"><i class="ri-information-line"></i> Al pagar con crédito se genera una factura pagada, se activa el servicio y se revela la información del stock.</div>${buyButton(ctx, req, p, available)}</div></div></div>` });
+    res.renderPage({ title: p.name, area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: `<link rel="stylesheet" href="/public/css/store-modern.css?v=3">${err}<div class="sp-detail-page"><a class="sp-back-link" href="/store?cat=${p.cat_id}"><i class="ri-arrow-left-line"></i> Volver a ${h(ctx,p.cat_name||'tienda')}</a><div class="sp-detail"><div class="sp-detail-image">${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-card-img-fallback"><i class="ri-image-2-line"></i></div>`}</div><div class="sp-detail-info"><span class="sp-product-cat">${h(ctx,p.cat_name||'Producto')}</span><h1 class="display-title">${h(ctx,p.name)}</h1><p class="sp-detail-desc">${h(ctx,p.description)}</p><div class="sp-card-pills">${stockBadge}<span class="sp-card-pill cycle"><i class="ri-time-line"></i> ${cycleLabel(p)}</span></div><div class="sp-detail-price"><small>Precio</small><b>${p.currency} $${billing.money(p.price)}</b></div><div class="sp-credits"><span class="sp-credit-pill"><span class="sp-credit-cur">MXN</span><b>$${billing.money(wMXN.balance)}</b></span><span class="sp-credit-pill"><span class="sp-credit-cur">USD</span><b>$${billing.money(wUSD.balance)}</b></span></div><div class="sp-detail-info-box"><i class="ri-information-line"></i> Al pagar con crédito se genera una factura pagada, se activa el servicio y se revela la información del stock.</div>${buyButton(ctx, req, p, available)}</div></div></div>` });
   });
   return r;
 }
