@@ -1,0 +1,129 @@
+/* =========================================================
+   THEME BRIDGE — sobrescribe los colores hardcodeados de
+   app.css y otros, usando las variables --acc, --acc2, --bg,
+   --card, --topbar, --text, --muted, --border, --gradient
+   inyectadas por core/layout.js (themeBridge).
+   Mantiene la apariencia 100% personalizable desde admin.
+   ========================================================= */
+
+/* Sidebar y brand */
+html body .sidebar{
+  background:color-mix(in srgb,var(--nav) 92%,transparent)!important;
+  border-right:1px solid color-mix(in srgb,var(--acc) 32%,transparent)!important;
+}
+html body.light .sidebar{
+  background:color-mix(in srgb,var(--nav) 96%,transparent)!important;
+  border-right-color:color-mix(in srgb,var(--acc) 22%,transparent)!important;
+}
+html body .brand-logo{
+  background:var(--gradient)!important;
+  box-shadow:0 0 28px color-mix(in srgb,var(--acc) 55%,transparent)!important;
+}
+html body .brand-logo-img{border-radius:14px;box-shadow:0 0 22px color-mix(in srgb,var(--acc) 30%,transparent)}
+
+/* Nav items del sidebar */
+html body .nav-item{color:color-mix(in srgb,var(--text) 84%,transparent)}
+html body .nav-item i{color:color-mix(in srgb,var(--text) 70%,transparent)}
+html body .nav-item:hover{
+  background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 32%,transparent),color-mix(in srgb,var(--acc2) 12%,transparent))!important;
+  border-color:color-mix(in srgb,var(--acc) 45%,transparent)!important;
+  color:#fff!important;
+  box-shadow:0 0 24px color-mix(in srgb,var(--acc) 18%,transparent)!important;
+}
+html body.light .nav-item:hover{color:var(--acc)!important}
+html body.light .nav-item:hover i{color:var(--acc)}
+html body .nav-title{color:color-mix(in srgb,var(--text) 70%,transparent)}
+
+/* Botones primarios y acciones del topbar */
+html body .top-actions a:not(.theme-toggle):not(.user-chip),
+html body .btn:not(.ghost):not(.danger),
+html body button:not(.theme-toggle):not(.mobile-menu):not(.appr-toggle input):not(.modal-x){
+  background:var(--gradient)!important;
+  box-shadow:0 4px 18px color-mix(in srgb,var(--acc) 35%,transparent)!important;
+}
+html body .btn.ghost{
+  background:color-mix(in srgb,var(--acc) 8%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--acc) 18%,transparent)!important;
+  color:var(--text)!important;
+}
+html body .btn.danger,html body .link-danger{
+  background:color-mix(in srgb,var(--danger) 14%,transparent)!important;
+  color:var(--danger)!important;
+  border:1px solid color-mix(in srgb,var(--danger) 28%,transparent)!important;
+}
+
+/* Cards y heroes */
+html body .card,html body .hero-card,html body .admin-hero{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--card) 92%,var(--acc) 6%),var(--card))!important;
+  border:1px solid color-mix(in srgb,var(--acc) 28%,transparent)!important;
+  border-radius:var(--ui-radius,22px)!important;
+}
+html body.light .card,html body.light .hero-card,html body.light .admin-hero{
+  background:var(--card)!important;
+  border-color:color-mix(in srgb,var(--acc) 18%,transparent)!important;
+}
+
+/* Inputs y textareas */
+html body input:not([type=color]):not([type=range]):not([type=checkbox]):not([type=radio]):not([type=file]),
+html body select,
+html body textarea{
+  background:color-mix(in srgb,var(--card) 70%,transparent)!important;
+  color:var(--text)!important;
+  border:1px solid color-mix(in srgb,var(--acc) 18%,transparent)!important;
+}
+html body.light input:not([type=color]):not([type=range]):not([type=checkbox]):not([type=radio]):not([type=file]),
+html body.light select,
+html body.light textarea{
+  background:color-mix(in srgb,var(--card) 92%,var(--acc) 4%)!important;
+  border-color:color-mix(in srgb,var(--acc) 18%,transparent)!important;
+  color:var(--text)!important;
+}
+html body input:focus,html body select:focus,html body textarea:focus{
+  border-color:var(--acc)!important;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)!important;
+  outline:none!important;
+}
+
+/* Iconos genéricos del cliente y admin */
+html body .icon-box,html body .stat-card i{color:var(--acc)!important}
+html body .icon-box{
+  background:color-mix(in srgb,var(--acc) 12%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--acc) 36%,transparent)!important;
+}
+html body .eyebrow{color:var(--acc2)!important}
+
+/* Tablas */
+html body table th{background:color-mix(in srgb,var(--acc) 6%,transparent)!important;color:var(--muted)}
+html body table td,html body table th{border-bottom:1px solid color-mix(in srgb,var(--acc) 8%,transparent)!important}
+
+/* Bottom nav móvil */
+html body .bottom-nav{
+  background:color-mix(in srgb,var(--nav) 92%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--acc) 35%,transparent)!important;
+}
+html body .bottom-nav a:hover{color:var(--acc)!important}
+html body .bottom-nav a{color:color-mix(in srgb,var(--text) 72%,transparent)}
+
+/* Auth card */
+html body .auth-card{
+  background:color-mix(in srgb,var(--card) 92%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--acc) 30%,transparent)!important;
+  border-radius:var(--ui-radius,22px)!important;
+}
+
+/* Notice/avisos */
+html body .notice.success{background:color-mix(in srgb,#22c55e 12%,transparent);border-color:color-mix(in srgb,#22c55e 35%,transparent);color:#86efac}
+html body .notice.error{background:color-mix(in srgb,var(--danger) 14%,transparent);border-color:color-mix(in srgb,var(--danger) 35%,transparent);color:var(--danger)}
+
+/* Roles y badges */
+html body .role-pill.admin{background:color-mix(in srgb,var(--acc) 28%,transparent);color:var(--acc2)}
+html body .role-pill.user{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+
+/* Sidebar logout cliente */
+html body .nav-item.nav-logout{color:var(--danger)!important}
+html body .nav-item.nav-logout i{color:var(--danger)!important}
+html body .nav-item.nav-logout:hover{
+  background:color-mix(in srgb,var(--danger) 14%,transparent)!important;
+  border-color:color-mix(in srgb,var(--danger) 32%,transparent)!important;
+  color:var(--danger)!important;
+}

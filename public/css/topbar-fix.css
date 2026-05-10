@@ -25,10 +25,9 @@ html body .topbar{
   align-items:center!important;
   justify-content:space-between!important;
   gap:14px!important;
-  background:#0d1230!important;
-  background-color:#0d1230!important;
-  background-image:linear-gradient(180deg,#10152e 0%,#0a0e22 100%)!important;
-  border-bottom:1px solid rgba(139,92,246,.28)!important;
+  background:var(--topbar)!important;
+  background-image:linear-gradient(180deg,color-mix(in srgb,var(--topbar) 92%,white 4%) 0%,var(--topbar) 100%)!important;
+  border-bottom:1px solid color-mix(in srgb,var(--acc) 28%,transparent)!important;
   box-shadow:0 6px 22px rgba(0,0,0,.35)!important;
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
@@ -38,10 +37,9 @@ html body .topbar{
 }
 
 html body.light .topbar{
-  background:#ffffff!important;
-  background-color:#ffffff!important;
-  background-image:linear-gradient(180deg,#ffffff 0%,#f5f6fc 100%)!important;
-  border-bottom-color:rgba(139,92,246,.18)!important;
+  background:var(--topbar)!important;
+  background-image:linear-gradient(180deg,color-mix(in srgb,var(--topbar) 96%,white) 0%,var(--topbar) 100%)!important;
+  border-bottom-color:color-mix(in srgb,var(--acc) 22%,transparent)!important;
   box-shadow:0 6px 18px rgba(15,23,42,.08)!important;
 }
 
@@ -87,17 +85,17 @@ html body .topbar .theme-toggle{
   display:grid!important;
   place-items:center!important;
   border-radius:12px!important;
-  border:1px solid rgba(139,92,246,.32)!important;
-  background:rgba(139,92,246,.16)!important;
-  color:#c4b5fd!important;
+  border:1px solid color-mix(in srgb,var(--acc) 32%,transparent)!important;
+  background:color-mix(in srgb,var(--acc) 16%,transparent)!important;
+  color:var(--acc)!important;
   cursor:pointer;
   box-shadow:none!important;
   position:relative!important;
 }
 html body.light .topbar .theme-toggle{
-  background:rgba(139,92,246,.1)!important;
-  border-color:rgba(139,92,246,.28)!important;
-  color:#6d28d9!important;
+  background:color-mix(in srgb,var(--acc) 10%,transparent)!important;
+  border-color:color-mix(in srgb,var(--acc) 28%,transparent)!important;
+  color:var(--acc)!important;
 }
 html body .topbar .theme-toggle i{font-size:19px!important;line-height:1!important}
 
@@ -107,25 +105,31 @@ html body .topbar .user-chip{
   gap:10px;
   padding:4px 14px 4px 4px;
   border-radius:999px;
-  border:1px solid rgba(139,92,246,.28);
-  background:rgba(139,92,246,.14);
+  border:1px solid color-mix(in srgb,var(--acc) 28%,transparent);
+  background:color-mix(in srgb,var(--acc) 14%,transparent);
   min-height:46px;
+  transition:background .2s,border-color .2s;
+}
+html body .topbar .user-chip:hover{
+  background:color-mix(in srgb,var(--acc) 22%,transparent);
+  border-color:color-mix(in srgb,var(--acc) 42%,transparent);
 }
 html body.light .topbar .user-chip{
-  background:rgba(139,92,246,.08)!important;
-  border-color:rgba(139,92,246,.22)!important;
+  background:color-mix(in srgb,var(--acc) 8%,transparent)!important;
+  border-color:color-mix(in srgb,var(--acc) 22%,transparent)!important;
 }
 html body .topbar .user-chip>span{
   width:38px!important;
   height:38px!important;
   min-width:38px!important;
   border-radius:50%!important;
-  background:linear-gradient(135deg,#7c3aed,#d946ef)!important;
+  background:var(--gradient)!important;
   display:grid!important;
   place-items:center!important;
   color:#fff!important;
   font-weight:900!important;
   overflow:hidden!important;
+  box-shadow:0 4px 12px color-mix(in srgb,var(--acc) 35%,transparent)!important;
 }
 html body .topbar .user-chip>span>.user-chip-logo{
   width:100%!important;
@@ -135,20 +139,18 @@ html body .topbar .user-chip>span>.user-chip-logo{
   display:block!important;
 }
 html body .topbar .user-chip>div{display:flex;flex-direction:column;line-height:1.15}
-html body .topbar .user-chip b{color:#fff!important;font-weight:850!important;font-size:13px!important;white-space:nowrap}
-html body.light .topbar .user-chip b{color:#0f172a!important}
-html body .topbar .user-chip small{color:rgba(196,181,253,.82)!important;font-size:11px!important;font-weight:650;white-space:nowrap;opacity:1!important}
-html body.light .topbar .user-chip small{color:#7c3aed!important}
+html body .topbar .user-chip b{color:var(--text)!important;font-weight:850!important;font-size:13px!important;white-space:nowrap}
+html body .topbar .user-chip small{color:var(--acc)!important;font-size:11px!important;font-weight:650;white-space:nowrap;opacity:.92!important}
 
 html body .topbar .top-actions>a{
   padding:11px 18px!important;
   border-radius:12px!important;
-  background:linear-gradient(135deg,#7c3aed,#d946ef)!important;
+  background:var(--gradient)!important;
   color:#fff!important;
   font-weight:900!important;
   font-size:13px!important;
   text-decoration:none!important;
-  box-shadow:0 6px 20px rgba(139,92,246,.4)!important;
+  box-shadow:0 6px 20px color-mix(in srgb,var(--acc) 40%,transparent)!important;
   border:0!important;
   display:inline-flex;
   align-items:center;
@@ -267,77 +269,125 @@ html body .topbar .user-chip{
 }
 html body .topbar .user-chip-menu{
   position:absolute;
-  top:calc(100% + 10px);
+  top:calc(100% + 12px);
   right:0;
   z-index:500;
-  min-width:240px;
+  min-width:268px;
   display:none!important;
   flex-direction:column;
-  border-radius:14px;
-  background:linear-gradient(145deg,rgba(13,18,38,.98),rgba(10,14,28,.95));
-  border:1px solid rgba(139,92,246,.28);
-  box-shadow:0 18px 40px rgba(0,0,0,.5);
+  border-radius:18px;
+  background:var(--card);
+  background-image:linear-gradient(155deg,color-mix(in srgb,var(--card) 96%,var(--acc) 4%),var(--card) 60%);
+  border:1px solid color-mix(in srgb,var(--acc) 32%,transparent);
+  box-shadow:0 24px 56px rgba(0,0,0,.45),0 0 0 1px color-mix(in srgb,var(--acc) 8%,transparent);
   padding:6px;
   overflow:hidden;
+  transform-origin:top right;
+  animation:userChipMenuIn .18s ease-out;
 }
 html body.light .topbar .user-chip-menu{
-  background:#ffffff;
-  border-color:rgba(124,58,237,.22);
-  box-shadow:0 18px 40px rgba(15,23,42,.18);
+  background:var(--card);
+  background-image:linear-gradient(155deg,color-mix(in srgb,var(--card) 96%,var(--acc) 6%),var(--card) 60%);
+  border-color:color-mix(in srgb,var(--acc) 22%,transparent);
+  box-shadow:0 24px 50px rgba(15,23,42,.18),0 0 0 1px color-mix(in srgb,var(--acc) 6%,transparent);
+}
+@keyframes userChipMenuIn{
+  from{opacity:0;transform:translateY(-6px) scale(.98);}
+  to{opacity:1;transform:translateY(0) scale(1);}
 }
 html body .topbar .user-chip.open .user-chip-menu{display:flex!important}
+
+/* Cabecera del menú con avatar */
 html body .topbar .user-chip-menu-head{
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:12px 12px 14px;
-  border-bottom:1px solid rgba(139,92,246,.18);
-  margin-bottom:6px;
+  gap:12px;
+  padding:14px 14px 14px;
+  margin:-6px -6px 6px;
+  border-radius:18px 18px 0 0;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 18%,transparent),color-mix(in srgb,var(--acc2) 12%,transparent));
+  border-bottom:1px solid color-mix(in srgb,var(--acc) 18%,transparent);
 }
-html body.light .topbar .user-chip-menu-head{border-bottom-color:rgba(124,58,237,.14)}
+html body.light .topbar .user-chip-menu-head{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 12%,transparent),color-mix(in srgb,var(--acc2) 8%,transparent));
+  border-bottom-color:color-mix(in srgb,var(--acc) 14%,transparent);
+}
 html body .topbar .user-chip-menu-avatar{
-  width:42px;height:42px;
+  width:46px;height:46px;
   border-radius:50%;
   display:grid;
   place-items:center;
-  background:linear-gradient(135deg,#7c3aed,#d946ef);
+  background:var(--gradient);
   color:#fff;
   font-weight:900;
-  font-size:16px;
+  font-size:17px;
   flex:0 0 auto;
   overflow:hidden;
+  box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 40%,transparent),inset 0 0 0 2px rgba(255,255,255,.18);
 }
 html body .topbar .user-chip-menu-avatar>img,
 html body .topbar .user-chip-menu-avatar>.user-chip-logo{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;display:block!important}
 html body .topbar .user-chip-menu-head>div{min-width:0;flex:1}
-html body .topbar .user-chip-menu-head b{display:block;font-size:14px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-html body.light .topbar .user-chip-menu-head b{color:#0f172a}
-html body .topbar .user-chip-menu-head small{display:block;font-size:11px;color:rgba(233,242,255,.6);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-html body.light .topbar .user-chip-menu-head small{color:rgba(15,23,42,.6)}
+html body .topbar .user-chip-menu-head b{display:block;font-size:14px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+html body .topbar .user-chip-menu-head small{display:block;font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+
+/* Secciones del menú */
+html body .topbar .user-chip-menu-section{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  padding:4px 0;
+  position:relative;
+}
+html body .topbar .user-chip-menu-section + .user-chip-menu-section{
+  border-top:1px solid color-mix(in srgb,var(--acc) 14%,transparent);
+  margin-top:4px;
+  padding-top:6px;
+}
+html body.light .topbar .user-chip-menu-section + .user-chip-menu-section{
+  border-top-color:color-mix(in srgb,var(--acc) 12%,transparent);
+}
+
+/* Items del menú */
 html body .topbar .user-chip-menu a{
   display:flex;
   align-items:center;
-  gap:9px;
-  padding:10px 12px;
-  border-radius:10px;
+  gap:11px;
+  padding:11px 14px;
+  border-radius:12px;
   text-decoration:none;
-  color:rgba(233,242,255,.85);
-  font-weight:850;
+  color:var(--text);
+  font-weight:800;
   font-size:13px;
+  letter-spacing:-.005em;
+  position:relative;
+  transition:background .15s,color .15s,transform .15s;
 }
-html body.light .topbar .user-chip-menu a{color:#0f172a}
-html body .topbar .user-chip-menu a:hover{background:rgba(139,92,246,.18);color:#fff}
-html body.light .topbar .user-chip-menu a:hover{background:rgba(124,58,237,.1);color:#7c3aed}
-html body .topbar .user-chip-menu a i{font-size:16px;color:#a78bfa}
-html body.light .topbar .user-chip-menu a i{color:#7c3aed}
-html body .topbar .user-chip-menu a.danger{color:#fb7185}
-html body .topbar .user-chip-menu a.danger i{color:#fb7185}
-html body .topbar .user-chip-menu a.danger:hover{background:rgba(244,63,94,.16);color:#fda4af}
-html body.light .topbar .user-chip-menu a.danger{color:#be123c}
-html body.light .topbar .user-chip-menu a.danger i{color:#be123c}
-html body.light .topbar .user-chip-menu a.danger:hover{background:rgba(244,63,94,.1)}
-html body .topbar .user-chip-divider{height:1px;background:rgba(255,255,255,.08);margin:4px 4px}
-html body.light .topbar .user-chip-divider{background:rgba(15,23,42,.08)}
+html body .topbar .user-chip-menu a span{flex:1;min-width:0}
+html body .topbar .user-chip-menu a:hover{
+  background:color-mix(in srgb,var(--acc) 16%,transparent);
+  color:var(--acc);
+  transform:translateX(2px);
+}
+html body.light .topbar .user-chip-menu a:hover{
+  background:color-mix(in srgb,var(--acc) 10%,transparent);
+  color:var(--acc);
+}
+html body .topbar .user-chip-menu a i{
+  font-size:17px;
+  color:var(--acc);
+  width:22px;
+  text-align:center;
+  flex:0 0 22px;
+}
+html body .topbar .user-chip-menu a.danger{color:var(--danger)}
+html body .topbar .user-chip-menu a.danger i{color:var(--danger)}
+html body .topbar .user-chip-menu a.danger:hover{
+  background:color-mix(in srgb,var(--danger) 16%,transparent);
+  color:var(--danger);
+}
+html body.light .topbar .user-chip-menu a.danger:hover{background:color-mix(in srgb,var(--danger) 10%,transparent)}
+html body .topbar .user-chip-divider{height:1px;background:color-mix(in srgb,var(--acc) 18%,transparent);margin:4px 4px}
 
 /* Estilos del logout en sidebar cliente */
 .nav-item.nav-logout{color:#fb7185!important}
