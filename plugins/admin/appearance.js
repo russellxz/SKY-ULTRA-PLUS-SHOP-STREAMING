@@ -5,7 +5,7 @@ const fs=require("fs");
 const crypto=require("crypto");
 
 const config={key:"admin_appearance",name:"Apariencia",icon:"ri-palette-line",route:"/admin/appearance",area:"admin",category:"Sistema",permission:"admin",order:10};
-const DEF={site_name:"SKY ULTRA PLUS shop",theme_dark_bg:"#050508",theme_dark_card:"#101426",theme_dark_text:"#e9f2ff",theme_dark_muted:"#9aa6bd",theme_dark_accent:"#8b2cff",theme_dark_accent_2:"#d946ef",theme_dark_border:"#7c3aed",theme_dark_topbar:"#111827",theme_dark_nav:"#0b1020",theme_dark_button:"#7c3aed",theme_dark_danger:"#ef4444",theme_light_bg:"#b7f4f2",theme_light_card:"#ffffff",theme_light_text:"#102033",theme_light_muted:"#536173",theme_light_accent:"#2563eb",theme_light_accent_2:"#7c3aed",theme_light_border:"#8b5cf6",theme_light_topbar:"#dff9ff",theme_light_nav:"#ffffff",theme_light_button:"#2563eb",theme_light_danger:"#dc2626",ui_radius:"22",ui_glow_strength:"35",ui_card_opacity:"82",site_bg_blur:"0",site_bg_overlay:"38",show_background_grid:"1",admin_effect_dark:"electric",admin_effect_light:"rain",client_effect_dark:"stars",client_effect_light:"thunder",home_marketing_title:"Bienvenido a nuestra tienda digital",home_marketing_subtitle:"Descubre productos exclusivos y disfruta de las mejores ofertas. Compra al instante con tus créditos.",home_marketing_cta_label:"Explorar tienda",home_marketing_cta_link:"/store",home_marketing_image:"",display_font:"Outfit",title_color_mode:"gradient",title_color_dark:"",title_color_light:""};
+const DEF={site_name:"SKY ULTRA PLUS shop",theme_dark_bg:"#050508",theme_dark_card:"#101426",theme_dark_text:"#e9f2ff",theme_dark_muted:"#9aa6bd",theme_dark_accent:"#8b2cff",theme_dark_accent_2:"#d946ef",theme_dark_border:"#7c3aed",theme_dark_topbar:"#111827",theme_dark_nav:"#0b1020",theme_dark_button:"#7c3aed",theme_dark_danger:"#ef4444",theme_light_bg:"#b7f4f2",theme_light_card:"#ffffff",theme_light_text:"#102033",theme_light_muted:"#536173",theme_light_accent:"#2563eb",theme_light_accent_2:"#7c3aed",theme_light_border:"#8b5cf6",theme_light_topbar:"#dff9ff",theme_light_nav:"#ffffff",theme_light_button:"#2563eb",theme_light_danger:"#dc2626",ui_radius:"22",ui_glow_strength:"35",ui_card_opacity:"82",site_bg_blur:"0",site_bg_overlay:"38",show_background_grid:"1",admin_effect_dark:"electric",admin_effect_light:"rain",client_effect_dark:"stars",client_effect_light:"thunder",home_marketing_title:"Bienvenido a nuestra tienda digital",home_marketing_subtitle:"Descubre productos exclusivos y disfruta de las mejores ofertas. Compra al instante con tus créditos.",home_marketing_cta_label:"Explorar tienda",home_marketing_cta_link:"/store",home_marketing_image:"",display_font:"Outfit",title_color_mode:"gradient",title_color_dark:"",title_color_light:"",menu_btn_color_dark:"",menu_btn_color_light:""};
 
 function h(ctx,v){return ctx.layout.escapeHtml(v||"")}
 function reg(ctx){return require("../../core/pluginLoader").registry(ctx.db)}
@@ -237,6 +237,8 @@ function router(ctx){
       ${selectRow(ctx,"title_color_mode","Estilo del color del título","Cómo se ve el nombre de la tienda.","ri-paint-line",[["gradient","Degradado de acento (recomendado)"],["solid","Color sólido (personalizado abajo)"],["text","Mismo color del texto"]])}
       ${colorRow(ctx,"title_color_dark","Color sólido (modo oscuro)","Solo se usa si elegiste 'Color sólido' arriba.","ri-moon-line")}
       ${colorRow(ctx,"title_color_light","Color sólido (modo claro)","Solo se usa si elegiste 'Color sólido' arriba.","ri-sun-line")}
+      ${colorRow(ctx,"menu_btn_color_dark","Color botón menú (oscuro)","Color sólido del botón hamburguesa en modo oscuro. Vacío = degradado.","ri-menu-2-line")}
+      ${colorRow(ctx,"menu_btn_color_light","Color botón menú (claro)","Color sólido del botón hamburguesa en modo claro. Vacío = degradado.","ri-menu-2-line")}
     </div>
   </form>
 
@@ -355,8 +357,15 @@ function router(ctx){
   // Color: actualizar el hex mostrado
   document.querySelectorAll('input[type=color][data-hex]').forEach(function(inp){
     var lbl=document.querySelector('.appr-color-hex[data-for="'+inp.dataset.hex+'"]');
-    inp.addEventListener('input',function(){if(lbl)lbl.textContent=inp.value.toUpperCase();applyLivePreview(inp.dataset.hex,inp.value);});
+    inp.addEventListener('input',function(){if(lbl)lbl.textContent=inp.value.toUpperCase();applyLivePreview(inp.dataset.hex,inp.value);applyMenuBtnPreview(inp.dataset.hex,inp.value);});
   });
+  function applyMenuBtnPreview(key,value){
+    if(key!=='menu_btn_color_dark'&&key!=='menu_btn_color_light')return;
+    var isDark=key==='menu_btn_color_dark';
+    var bodyMatch=isDark?!document.body.classList.contains('light'):document.body.classList.contains('light');
+    var btn=document.querySelector('.mobile-menu');
+    if(btn&&bodyMatch){btn.style.background=value;btn.style.backgroundImage='none';}
+  }
   // Live preview: actualiza CSS variables al vuelo
   function applyLivePreview(key,value){
     var root=document.documentElement.style;
