@@ -22,29 +22,29 @@ html body .brand-logo{
 html body .brand-logo-img{border-radius:14px;box-shadow:0 0 22px color-mix(in srgb,var(--acc) 30%,transparent)}
 
 /* Sidebar - secciones y nav items */
-html body .sidebar nav{display:flex;flex-direction:column;gap:2px}
+html body .sidebar nav{display:flex;flex-direction:column;gap:4px}
 html body .nav-group{
-  padding:6px 0;
+  padding:8px 0;
   display:flex;
   flex-direction:column;
-  gap:3px;
+  gap:5px;
   position:relative;
 }
 html body .nav-group + .nav-group{
   border-top:1px solid color-mix(in srgb,var(--acc) 14%,transparent)!important;
   margin-top:6px;
-  padding-top:10px;
+  padding-top:12px;
 }
 html body.light .nav-group + .nav-group{
   border-top-color:color-mix(in srgb,var(--acc) 12%,transparent)!important;
 }
 html body .nav-title{
-  font-size:11px;
+  font-size:11.5px;
   font-weight:900;
   text-transform:uppercase;
-  letter-spacing:.12em;
-  color:color-mix(in srgb,var(--text) 55%,transparent)!important;
-  padding:0 8px 4px;
+  letter-spacing:.14em;
+  color:color-mix(in srgb,var(--text) 60%,transparent)!important;
+  padding:0 10px 6px;
   margin:0!important;
   display:flex;
   align-items:center;
@@ -54,37 +54,98 @@ html body .nav-title{
 html body .nav-item{
   display:flex!important;
   align-items:center;
-  gap:11px;
-  padding:11px 14px!important;
-  border-radius:12px!important;
+  gap:13px;
+  padding:13px 14px!important;
+  border-radius:14px!important;
   text-decoration:none;
   margin:0!important;
-  color:color-mix(in srgb,var(--text) 88%,transparent)!important;
+  color:color-mix(in srgb,var(--text) 90%,transparent)!important;
   border:1px solid transparent!important;
   font-weight:800;
-  font-size:13.5px;
-  letter-spacing:-.005em;
-  transition:background .15s,color .15s,transform .15s,border-color .15s;
+  font-size:15px;
+  letter-spacing:-.01em;
+  transition:background .18s,color .18s,transform .18s,border-color .18s,box-shadow .18s;
+  position:relative;
 }
 html body .nav-item i{
-  font-size:17px!important;
-  width:22px;
+  font-size:20px!important;
+  width:28px;
+  height:28px;
   text-align:center;
-  flex:0 0 22px;
+  flex:0 0 28px;
   color:var(--acc)!important;
+  display:inline-grid;
+  place-items:center;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--acc) 12%,transparent);
+  transition:background .18s,color .18s,transform .18s;
 }
 html body .nav-item:hover{
-  background:color-mix(in srgb,var(--acc) 16%,transparent)!important;
-  border-color:color-mix(in srgb,var(--acc) 28%,transparent)!important;
+  background:color-mix(in srgb,var(--acc) 18%,transparent)!important;
+  border-color:color-mix(in srgb,var(--acc) 30%,transparent)!important;
   color:var(--acc)!important;
-  transform:translateX(2px);
-  box-shadow:none!important;
+  transform:translateX(3px);
+  box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 14%,transparent)!important;
 }
-html body .nav-item:hover i{color:var(--acc)!important}
+html body .nav-item:hover i{
+  color:#fff!important;
+  background:var(--gradient)!important;
+  transform:scale(1.04);
+}
 html body.light .nav-item:hover{
-  background:color-mix(in srgb,var(--acc) 10%,transparent)!important;
+  background:color-mix(in srgb,var(--acc) 12%,transparent)!important;
   color:var(--acc)!important;
 }
+html body .nav-item.nav-logout i{background:color-mix(in srgb,var(--danger) 14%,transparent)!important;color:var(--danger)!important}
+html body .nav-item.nav-logout:hover i{background:linear-gradient(135deg,var(--danger),color-mix(in srgb,var(--danger) 70%,#000))!important;color:#fff!important}
+
+/* Dropdown menu items - mismo flow que el sidebar */
+html body .topbar .user-chip-menu a{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:13px;
+  text-decoration:none;
+  color:var(--text);
+  font-weight:800;
+  font-size:14.5px;
+  letter-spacing:-.01em;
+  position:relative;
+  transition:background .18s,color .18s,transform .18s,box-shadow .18s;
+}
+html body .topbar .user-chip-menu a span{flex:1;min-width:0}
+html body .topbar .user-chip-menu a i{
+  font-size:18px;
+  color:var(--acc);
+  width:28px;
+  height:28px;
+  text-align:center;
+  flex:0 0 28px;
+  display:inline-grid;
+  place-items:center;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--acc) 12%,transparent);
+  transition:background .18s,color .18s,transform .18s;
+}
+html body .topbar .user-chip-menu a:hover{
+  background:color-mix(in srgb,var(--acc) 18%,transparent);
+  color:var(--acc);
+  transform:translateX(3px);
+  box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 14%,transparent);
+}
+html body .topbar .user-chip-menu a:hover i{
+  color:#fff;
+  background:var(--gradient);
+  transform:scale(1.05);
+}
+html body.light .topbar .user-chip-menu a:hover{
+  background:color-mix(in srgb,var(--acc) 12%,transparent);
+  color:var(--acc);
+}
+html body .topbar .user-chip-menu a.danger i{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+html body .topbar .user-chip-menu a.danger:hover{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger)}
+html body .topbar .user-chip-menu a.danger:hover i{background:linear-gradient(135deg,var(--danger),color-mix(in srgb,var(--danger) 70%,#000));color:#fff}
 
 /* Botones primarios y acciones del topbar */
 html body .top-actions a:not(.theme-toggle):not(.user-chip),
