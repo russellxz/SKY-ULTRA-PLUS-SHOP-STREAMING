@@ -596,7 +596,7 @@ app.get("/", (req, res) => {
           <div class="cd-cat-body">
             <h3>${h(c.name)}</h3>
             <p>${h(c.description||'Descubre todo lo disponible en esta categoría.')}</p>
-            <a href="/store#cat-${c.id}" class="cd-cat-cta">
+            <a href="/store?cat=${c.id}" class="cd-cat-cta">
               <i class="ri-eye-line"></i> Ver productos
             </a>
           </div>
