@@ -15,11 +15,53 @@ html body.light .sidebar{
   background:color-mix(in srgb,var(--nav) 96%,transparent)!important;
   border-right-color:color-mix(in srgb,var(--acc) 22%,transparent)!important;
 }
-html body .brand-logo{
-  background:var(--gradient)!important;
-  box-shadow:0 0 28px color-mix(in srgb,var(--acc) 55%,transparent)!important;
+html body .brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:4px 6px 18px;
+  margin-bottom:14px;
+  border-bottom:1px solid color-mix(in srgb,var(--acc) 14%,transparent);
 }
-html body .brand-logo-img{border-radius:14px;box-shadow:0 0 22px color-mix(in srgb,var(--acc) 30%,transparent)}
+html body .brand-logo{
+  width:46px;height:46px;
+  border-radius:14px;
+  display:grid;place-items:center;
+  background:var(--gradient)!important;
+  color:#fff;
+  font-weight:900;
+  font-size:20px;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--acc) 45%,transparent)!important;
+  flex:0 0 auto;
+}
+html body .brand-logo-img{
+  width:46px;height:46px;
+  border-radius:14px;
+  object-fit:cover;
+  display:block;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--acc) 30%,transparent);
+  flex:0 0 auto;
+}
+html body .brand-meta{display:flex;flex-direction:column;line-height:1.1;min-width:0;flex:1}
+html body .brand-name{
+  font-size:18px!important;
+  font-weight:900!important;
+  letter-spacing:-.015em!important;
+  display:block;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin:0;
+}
+html body .brand-meta small{
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--acc)!important;
+  opacity:.85;
+  margin-top:3px;
+}
 
 /* Sidebar - secciones y nav items */
 html body .sidebar nav{display:flex;flex-direction:column;gap:4px}
@@ -176,16 +218,70 @@ html body .mobile-menu i{color:var(--acc)!important;font-size:20px!important}
 /* Dropdown menu cabecera con buena legibilidad en ambos modos */
 html body .topbar .user-chip-menu-head b{color:var(--text)!important}
 html body .topbar .user-chip-menu-head small{color:color-mix(in srgb,var(--text) 65%,transparent)!important}
-html body .topbar .user-chip-menu a{color:var(--text)!important}
-html body .topbar .user-chip-menu a:hover{color:var(--acc)!important}
+html body .topbar .user-chip-menu a{
+  background:transparent!important;
+  color:var(--text)!important;
+  box-shadow:none!important;
+}
+html body .topbar .user-chip-menu a:hover{
+  background:color-mix(in srgb,var(--acc) 18%,transparent)!important;
+  color:var(--acc)!important;
+}
 html body .topbar .user-chip-menu a.danger{color:var(--danger)!important}
+html body .topbar .user-chip-menu a.danger:hover{
+  background:color-mix(in srgb,var(--danger) 18%,transparent)!important;
+  color:var(--danger)!important;
+}
 
-/* Botones primarios y acciones del topbar */
-html body .top-actions a:not(.theme-toggle):not(.user-chip),
-html body .btn:not(.ghost):not(.danger),
-html body button:not(.theme-toggle):not(.mobile-menu):not(.appr-toggle input):not(.modal-x){
+/* Auth page - proteger iconos especiales para que no les afecte el gradient global */
+html body .ac-eye,
+html body .at-toggle,
+html body .at-sup-btn,
+html body .ac-sup-inline,
+html body .at-sup-x{
+  background:initial;
+  box-shadow:none!important;
+  color:var(--acc)!important;
+}
+html body .ac-eye{
+  background:transparent!important;
+  color:color-mix(in srgb,var(--text) 55%,transparent)!important;
+  border:none!important;
+}
+html body .ac-eye:hover{color:var(--acc)!important}
+html body .at-toggle,html body .at-sup-btn{
+  background:color-mix(in srgb,var(--acc) 12%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--acc) 28%,transparent)!important;
+  color:var(--text)!important;
+}
+html body .at-toggle:hover,html body .at-sup-btn:hover{
+  background:color-mix(in srgb,var(--acc) 22%,transparent)!important;
+  border-color:color-mix(in srgb,var(--acc) 50%,transparent)!important;
+}
+html body .at-toggle i,html body .at-sup-btn i{color:var(--acc)!important}
+html body .at-sup-x{
+  background:color-mix(in srgb,var(--acc) 10%,transparent)!important;
+  color:var(--text)!important;
+}
+html body .at-sup-x:hover{background:color-mix(in srgb,var(--acc) 22%,transparent)!important}
+
+/* Auth submit button (.ac-btn) usa gradient correctamente */
+html body .ac-btn{
+  background:var(--gradient)!important;
+  color:#fff!important;
+  box-shadow:0 6px 22px color-mix(in srgb,var(--acc) 40%,transparent)!important;
+  border:none!important;
+}
+html body .ac-btn:hover{
+  box-shadow:0 10px 28px color-mix(in srgb,var(--acc) 50%,transparent)!important;
+}
+
+/* Botones primarios — SOLO .btn explícitos y top-actions de primer nivel */
+html body .topbar .top-actions > a:not(.theme-toggle):not(.user-chip),
+html body .btn:not(.ghost):not(.danger){
   background:var(--gradient)!important;
   box-shadow:0 4px 18px color-mix(in srgb,var(--acc) 35%,transparent)!important;
+  color:#fff!important;
 }
 html body .btn.ghost{
   background:color-mix(in srgb,var(--acc) 8%,transparent)!important;
