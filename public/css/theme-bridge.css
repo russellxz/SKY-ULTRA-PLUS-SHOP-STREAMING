@@ -147,6 +147,39 @@ html body .topbar .user-chip-menu a.danger i{background:color-mix(in srgb,var(--
 html body .topbar .user-chip-menu a.danger:hover{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger)}
 html body .topbar .user-chip-menu a.danger:hover i{background:linear-gradient(135deg,var(--danger),color-mix(in srgb,var(--danger) 70%,#000));color:#fff}
 
+/* Theme toggle uniforme en ambos modos */
+html body .theme-toggle{
+  position:relative!important;
+  border:1px solid color-mix(in srgb,var(--acc) 30%,transparent)!important;
+  background:color-mix(in srgb,var(--acc) 12%,transparent)!important;
+  color:var(--acc)!important;
+  box-shadow:none!important;
+}
+html body .theme-toggle:hover{
+  background:color-mix(in srgb,var(--acc) 22%,transparent)!important;
+  border-color:color-mix(in srgb,var(--acc) 50%,transparent)!important;
+}
+html body .theme-toggle i{color:var(--acc)!important;text-shadow:none!important}
+
+/* Mobile menu (hamburguesa) */
+html body .mobile-menu{
+  background:color-mix(in srgb,var(--acc) 16%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--acc) 32%,transparent)!important;
+  color:var(--acc)!important;
+  border-radius:12px!important;
+  width:42px!important;height:42px!important;
+  display:grid!important;place-items:center!important;
+  box-shadow:none!important;
+}
+html body .mobile-menu i{color:var(--acc)!important;font-size:20px!important}
+
+/* Dropdown menu cabecera con buena legibilidad en ambos modos */
+html body .topbar .user-chip-menu-head b{color:var(--text)!important}
+html body .topbar .user-chip-menu-head small{color:color-mix(in srgb,var(--text) 65%,transparent)!important}
+html body .topbar .user-chip-menu a{color:var(--text)!important}
+html body .topbar .user-chip-menu a:hover{color:var(--acc)!important}
+html body .topbar .user-chip-menu a.danger{color:var(--danger)!important}
+
 /* Botones primarios y acciones del topbar */
 html body .top-actions a:not(.theme-toggle):not(.user-chip),
 html body .btn:not(.ghost):not(.danger),
