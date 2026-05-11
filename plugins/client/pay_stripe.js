@@ -129,7 +129,7 @@ function router(ctx) {
       SELECT i.*, it.name AS p_name, it.reference_id AS product_id
       FROM invoices i
       LEFT JOIN invoice_items it ON it.invoice_id=i.id AND it.item_type='product'
-      WHERE i.id=? AND i.user_id=? AND i.status='pending'
+      WHERE i.id=? AND i.user_id=? AND i.status IN ('pending','suspended')
       LIMIT 1
     `).get(invoiceId, u.id);
     if (!inv) return res.status(404).type("text/plain").send("Factura no encontrada o no pagable.");
@@ -281,7 +281,7 @@ function publicWebhookRouter(deps) {
         const invoiceId = Number(md.invoice_id || 0);
         if (invoiceId) {
           const inv = db.sqlite.prepare("SELECT * FROM invoices WHERE id=?").get(invoiceId);
-          if (inv && inv.status === "pending") {
+          if (inv && (inv.status === "pending" || inv.status === "suspended")) {
             const out = payments.finalizeExternalPayment(db, invoiceId, {
               provider: "stripe",
               providerRef: obj.id || "",
