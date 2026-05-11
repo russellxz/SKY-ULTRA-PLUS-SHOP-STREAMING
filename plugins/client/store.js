@@ -1,6 +1,7 @@
 "use strict";
 const express = require("express");
 const billing = require("../../core/billing");
+const payments = require("../../core/payments");
 
 const config = { key: "client_store", name: "Productos", icon: "ri-store-2-line", route: "/store", area: "client", category: "Tienda", order: 10 };
 function h(ctx,v){return ctx.layout.escapeHtml(v||"");}
@@ -9,11 +10,54 @@ function cycleLabel(p){ if(p.billing_type==='one_time') return 'Pago único'; if
 function wallet(ctx,userId,currency){ return ctx.db.getWallet(userId,currency); }
 
 function buyButton(ctx, req, p, available){
+  if (available <= 0){
+    return `<button class="sp-buy-btn" disabled><i class="ri-close-circle-line"></i> Sin stock</button>`;
+  }
   const w = wallet(ctx, req.session.user.id, p.currency);
   const enough = Number(w.balance || 0) >= Number(p.price || 0);
-  if (available <= 0) return `<button class="sp-buy-btn" disabled><i class="ri-close-circle-line"></i> Sin stock</button>`;
-  if (!enough) return `<button class="sp-buy-btn" disabled><i class="ri-wallet-3-line"></i> Crédito insuficiente</button>`;
-  return `<form method="POST" action="/store/product/${p.id}/buy-credit" class="sp-buy-form"><button class="sp-buy-btn"><i class="ri-shopping-cart-2-line"></i> Comprar con crédito</button></form>`;
+
+  const acceptCredit = payments.productAcceptsProvider(p, "credit");
+  const acceptPaypal = payments.productAcceptsProvider(p, "paypal");
+  const acceptStripe = payments.productAcceptsProvider(p, "stripe");
+
+  const ppApi = ctx.db.getSetting("paypal_api_enabled","0") === "1";
+  const ppIpn = ctx.db.getSetting("paypal_ipn_enabled","0") === "1";
+  const stEn  = ctx.db.getSetting("stripe_enabled","0") === "1" && !!ctx.db.getSetting("stripe_pk","") && !!ctx.db.getSetting("stripe_sk","");
+
+  const out = [];
+
+  // Crédito
+  if (acceptCredit){
+    if (enough){
+      out.push(`<form method="POST" action="/store/product/${p.id}/buy-credit" class="sp-buy-form"><button class="sp-buy-btn credit"><i class="ri-wallet-3-line"></i> Comprar con crédito</button></form>`);
+    } else {
+      out.push(`<button class="sp-buy-btn" disabled title="Crédito insuficiente en ${h(ctx,p.currency)}"><i class="ri-wallet-3-line"></i> Crédito insuficiente</button>`);
+    }
+  }
+
+  // PayPal API
+  if (acceptPaypal){
+    if (ppApi){
+      out.push(`<form method="POST" action="/pay/paypal/buy" class="sp-buy-form"><input type="hidden" name="product_id" value="${p.id}"><button class="sp-buy-btn pp"><i class="ri-paypal-line"></i> Pagar con PayPal</button></form>`);
+    } else {
+      out.push(`<button type="button" class="sp-buy-btn pp" disabled title="Este método aún no está disponible. El administrador no ha configurado PayPal."><i class="ri-paypal-line"></i> PayPal — no disponible</button>`);
+    }
+    if (ppIpn){
+      out.push(`<form method="POST" action="/pay/paypal/buy-ipn" class="sp-buy-form"><input type="hidden" name="product_id" value="${p.id}"><button class="sp-buy-btn pp-ipn"><i class="ri-paypal-line"></i> Pagar con PayPal (IPN)</button></form>`);
+    }
+  }
+
+  // Stripe
+  if (acceptStripe){
+    if (stEn){
+      out.push(`<a class="sp-buy-btn stripe" href="/pay/stripe/buy?product_id=${p.id}"><i class="ri-bank-card-line"></i> Pagar con Stripe</a>`);
+    } else {
+      out.push(`<button type="button" class="sp-buy-btn stripe" disabled title="Este método aún no está disponible. El administrador no ha configurado Stripe."><i class="ri-bank-card-line"></i> Stripe — no disponible</button>`);
+    }
+  }
+
+  if (!out.length) return `<button class="sp-buy-btn" disabled>Sin métodos de pago configurados</button>`;
+  return `<div class="sp-buy-methods">${out.join("")}</div>`;
 }
 
 function router(ctx) {
@@ -164,7 +208,19 @@ function router(ctx) {
       </article>`;
     }).join("") : `<div class="sp-empty"><i class="ri-shopping-bag-line"></i><b>Sin productos</b><span>Esta categoría no tiene productos${filter!=="all"?" con ese filtro":""}.</span></div>`;
 
-    const html = `<link rel="stylesheet" href="/public/css/store-modern.css?v=6">${err}<div class="sp-page">${heroHtml}${tabsHtml}<div class="sp-layout">${categoriesHtml}<main class="sp-products"><div class="sp-grid">${productsHtml}</div></main></div></div>`;
+    const html = `<link rel="stylesheet" href="/public/css/store-modern.css?v=6">
+    <style>
+      .sp-buy-methods{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+      .sp-buy-methods .sp-buy-btn{width:100%;justify-content:center;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+      .sp-buy-btn.pp{background:linear-gradient(135deg,#003087,#009cde);color:#fff;border:0}
+      .sp-buy-btn.pp-ipn{background:linear-gradient(135deg,#0070ba,#005ea6);color:#fff;border:0}
+      .sp-buy-btn.stripe{background:linear-gradient(135deg,#635bff,#3b82f6);color:#fff;border:0}
+      .sp-buy-btn:not(.credit):not(.pp):not(.pp-ipn):not(.stripe):not([disabled]){background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff}
+      .sp-buy-btn[disabled]{opacity:.55;cursor:not-allowed}
+      .sp-buy-btn.pp:hover:not([disabled]),
+      .sp-buy-btn.pp-ipn:hover:not([disabled]),
+      .sp-buy-btn.stripe:hover:not([disabled]){filter:brightness(1.07)}
+    </style>${err}<div class="sp-page">${heroHtml}${tabsHtml}<div class="sp-layout">${categoriesHtml}<main class="sp-products"><div class="sp-grid">${productsHtml}</div></main></div></div>`;
 
     res.renderPage({ title: selected?selected.name:"Productos", area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: html });
   });
@@ -184,7 +240,15 @@ function router(ctx) {
     const descBlock = descRest ? `<p class="sp-detail-desc">${h(ctx,descRest)}</p>` : "";
     const wUSD = ctx.db.getWallet(req.session.user.id, "USD");
     const wMXN = ctx.db.getWallet(req.session.user.id, "MXN");
-    res.renderPage({ title: p.name, area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: `<link rel="stylesheet" href="/public/css/store-modern.css?v=6">${err}<div class="sp-detail-page"><a class="sp-back-link" href="/store?cat=${p.cat_id}"><i class="ri-arrow-left-line"></i> Volver a ${h(ctx,p.cat_name||'tienda')}</a><div class="sp-detail"><div class="sp-detail-image">${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-card-img-fallback"><i class="ri-image-2-line"></i></div>`}${stockBadge}</div><div class="sp-detail-info"><span class="sp-product-cat">${h(ctx,p.cat_name||'Producto')}</span><h1 class="display-title"><i class="ri-vip-diamond-fill"></i> ${h(ctx,p.name)}</h1><span class="sp-cycle-pill"><i class="ri-time-line"></i> ${cycleLabel(p)}</span>${bullets}${descBlock}<div class="sp-detail-price"><small>Precio</small><b>${p.currency} $${billing.money(p.price)}</b></div><div class="sp-credits"><span class="sp-credit-pill"><span class="sp-credit-cur">Crédito MXN</span><b>$${billing.money(wMXN.balance)}</b></span><span class="sp-credit-pill"><span class="sp-credit-cur">Crédito USD</span><b>$${billing.money(wUSD.balance)}</b></span></div><div class="sp-detail-info-box"><i class="ri-information-line"></i> Al pagar con crédito se genera una factura pagada, se activa el servicio y se revela la información del stock.</div>${buyButton(ctx, req, p, available)}</div></div></div>` });
+    res.renderPage({ title: p.name, area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: `<link rel="stylesheet" href="/public/css/store-modern.css?v=6">
+    <style>
+      .sp-buy-methods{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+      .sp-buy-methods .sp-buy-btn{width:100%;justify-content:center;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+      .sp-buy-btn.pp{background:linear-gradient(135deg,#003087,#009cde);color:#fff;border:0}
+      .sp-buy-btn.pp-ipn{background:linear-gradient(135deg,#0070ba,#005ea6);color:#fff;border:0}
+      .sp-buy-btn.stripe{background:linear-gradient(135deg,#635bff,#3b82f6);color:#fff;border:0}
+      .sp-buy-btn[disabled]{opacity:.55;cursor:not-allowed}
+    </style>${err}<div class="sp-detail-page"><a class="sp-back-link" href="/store?cat=${p.cat_id}"><i class="ri-arrow-left-line"></i> Volver a ${h(ctx,p.cat_name||'tienda')}</a><div class="sp-detail"><div class="sp-detail-image">${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-card-img-fallback"><i class="ri-image-2-line"></i></div>`}${stockBadge}</div><div class="sp-detail-info"><span class="sp-product-cat">${h(ctx,p.cat_name||'Producto')}</span><h1 class="display-title"><i class="ri-vip-diamond-fill"></i> ${h(ctx,p.name)}</h1><span class="sp-cycle-pill"><i class="ri-time-line"></i> ${cycleLabel(p)}</span>${bullets}${descBlock}<div class="sp-detail-price"><small>Precio</small><b>${p.currency} $${billing.money(p.price)}</b></div><div class="sp-credits"><span class="sp-credit-pill"><span class="sp-credit-cur">Crédito MXN</span><b>$${billing.money(wMXN.balance)}</b></span><span class="sp-credit-pill"><span class="sp-credit-cur">Crédito USD</span><b>$${billing.money(wUSD.balance)}</b></span></div><div class="sp-detail-info-box"><i class="ri-information-line"></i> Al pagar con crédito se genera una factura pagada, se activa el servicio y se revela la información del stock.</div>${buyButton(ctx, req, p, available)}</div></div></div>` });
   });
   return r;
 }

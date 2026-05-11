@@ -76,6 +76,38 @@ function productAcceptsProvider(product, provider) {
   return false;
 }
 
+function providerEnabledGlobally(db, provider) {
+  if (provider === "credit") return true;
+  if (provider === "paypal_api") return db.getSetting("paypal_api_enabled", "0") === "1";
+  if (provider === "paypal_ipn") return db.getSetting("paypal_ipn_enabled", "0") === "1";
+  if (provider === "paypal") return providerEnabledGlobally(db, "paypal_api") || providerEnabledGlobally(db, "paypal_ipn");
+  if (provider === "stripe") {
+    return db.getSetting("stripe_enabled", "0") === "1"
+      && !!db.getSetting("stripe_pk", "")
+      && !!db.getSetting("stripe_sk", "");
+  }
+  return false;
+}
+
+function providerLabel(provider) {
+  const map = {
+    credits: "Crédito",
+    credit: "Crédito",
+    paypal: "PayPal",
+    paypal_ipn: "PayPal (IPN)",
+    stripe: "Stripe",
+    "": "—",
+  };
+  return map[provider] || provider || "—";
+}
+
+function providerBadgeClass(provider) {
+  if (provider === "paypal" || provider === "paypal_ipn") return "pp";
+  if (provider === "stripe") return "stripe";
+  if (provider === "credits" || provider === "credit") return "credit";
+  return "muted";
+}
+
 function invoiceProduct(db, invoice) {
   const item = db.sqlite.prepare(
     "SELECT * FROM invoice_items WHERE invoice_id=? AND item_type='product' LIMIT 1"
@@ -84,4 +116,24 @@ function invoiceProduct(db, invoice) {
   return db.sqlite.prepare("SELECT * FROM products WHERE id=?").get(item.reference_id) || null;
 }
 
-module.exports = { finalizeExternalPayment, productAcceptsProvider, invoiceProduct };
+function findOrCreatePendingInvoice(db, userId, productId) {
+  const billing = require("./billing");
+  const p = db.sqlite.prepare("SELECT * FROM products WHERE id=? AND active=1").get(productId);
+  if (!p) return { ok: false, error: "Producto no disponible." };
+  if (p.delivery_mode === "sequential") {
+    const c = db.sqlite.prepare("SELECT COUNT(*) c FROM product_inventory_items WHERE product_id=? AND status='available'").get(productId).c;
+    if (c <= 0) return { ok: false, error: "Sin stock disponible." };
+  }
+  const existing = db.sqlite.prepare(`
+    SELECT i.* FROM invoices i
+    JOIN invoice_items it ON it.invoice_id=i.id AND it.item_type='product' AND it.reference_id=?
+    WHERE i.user_id=? AND i.status='pending'
+    ORDER BY i.id DESC LIMIT 1
+  `).get(productId, userId);
+  if (existing) return { ok: true, invoice: existing, product: p, reused: true };
+  const inv = billing.makeInvoice(db, userId, p, "product");
+  if (!inv) return { ok: false, error: "No se pudo generar la factura." };
+  return { ok: true, invoice: inv, product: p, reused: false };
+}
+
+module.exports = { finalizeExternalPayment, productAcceptsProvider, providerEnabledGlobally, providerLabel, providerBadgeClass, invoiceProduct, findOrCreatePendingInvoice };
