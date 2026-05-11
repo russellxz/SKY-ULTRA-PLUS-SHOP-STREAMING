@@ -23,6 +23,21 @@ let lastGroupsFetchAt = null;
 function digits(s) { return String(s || "").replace(/\D/g, ""); }
 function isOnline() { return state === "connected" && !!sock; }
 
+// Normaliza un número al formato que WhatsApp espera para enviar mensajes.
+// Caso típico que rompe envíos: clientes mexicanos que se registran como
+//   +52  +  5512345678  (10 dígitos)
+// pero WhatsApp exige  521 + 5512345678  (con el "1" después del 52).
+// Si el número ya empieza con "521" se deja tal cual. Sólo se ajusta cuando
+// detectamos exactamente 12 dígitos arrancando con "52" (52 + 10 dígitos).
+function normalizePhoneForWA(phone) {
+  let d = digits(phone);
+  if (!d) return d;
+  if (d.startsWith("52") && !d.startsWith("521") && d.length === 12) {
+    d = "521" + d.slice(2);
+  }
+  return d;
+}
+
 async function loadModules() {
   if (baileys && pino) return true;
   try {
@@ -258,7 +273,7 @@ async function sendMessageToJid(jid, text) {
 
 async function sendMessageToNumber(phone, text) {
   if (!isOnline()) return { ok: false, error: "WhatsApp no está conectado." };
-  const d = digits(phone);
+  const d = normalizePhoneForWA(phone);
   if (!d || d.length < 7) return { ok: false, error: "Número inválido: " + phone };
   const jid = `${d}@s.whatsapp.net`;
   try {
@@ -287,16 +302,18 @@ function clientGreeting(user) {
 }
 
 function clientPhoneFromUser(user) {
-  // Prioriza whatsapp_country + whatsapp_number; cae a phone si no
+  // Prioriza whatsapp_country + whatsapp_number; cae a phone si no.
+  // Aplica la normalización para que números mexicanos registrados sin
+  // el "1" después del +52 se conviertan automáticamente al formato WA.
   const cc = digits(user.whatsapp_country);
   const num = digits(user.whatsapp_number);
-  if (cc && num) return cc + num;
-  if (num) return num;
-  return digits(user.phone);
+  if (cc && num) return normalizePhoneForWA(cc + num);
+  if (num) return normalizePhoneForWA(num);
+  return normalizePhoneForWA(user.phone);
 }
 
 function adminPhone(db) {
-  return digits(db.getSetting("wa_admin_phone", ""));
+  return normalizePhoneForWA(db.getSetting("wa_admin_phone", ""));
 }
 
 function buildClientMessage(siteName, event, payload, url) {
@@ -467,6 +484,7 @@ module.exports = {
   notifyByServiceId,
   sendMessageToNumber,
   sendMessageToJid,
+  normalizePhoneForWA,
   refreshGroups,
   getGroups,
   autoStartIfEnabled,

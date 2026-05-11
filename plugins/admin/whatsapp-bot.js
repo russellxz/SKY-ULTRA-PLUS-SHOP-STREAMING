@@ -425,9 +425,12 @@ function router(ctx) {
         <p style="margin:0;font-weight:850;color:#fbbf24"><i class="ri-error-warning-line"></i> Importante — números de México</p>
         <p style="margin:6px 0 0">
           Por regla de WhatsApp, los números mexicanos celulares necesitan un <b>1</b> después del código de país <b>+52</b>.<br>
-          Ejemplo: el número <b>+52 55 1234 5678</b> se escribe como <b>5215512345678</b> (con el <b>1</b> después del 52).<br>
-          Aplica tanto para el número del bot como para el número del admin si son mexicanos.
+          Ejemplo: el número <b>+52 55 1234 5678</b> se escribe como <b>5215512345678</b> (con el <b>1</b> después del 52).
         </p>
+        <p style="margin:10px 0 0;padding:10px 12px;border-radius:10px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.32);color:#86efac;font-size:13px">
+          <i class="ri-checkbox-circle-line"></i> <b>El sistema lo corrige solo para los clientes.</b> Si un usuario se registró con <b>+52</b> + sus 10 dígitos normales (sin el "1"), al momento de enviarle WhatsApp el bot agrega automáticamente el <b>1</b> después del 52. No tienes que pedirle al cliente que se registre de otra forma.
+        </p>
+        <p style="margin:10px 0 0;color:rgba(233,242,255,.7);font-size:12px">Para el <b>número del bot</b> y el <b>número del admin</b> sí se recomienda escribirlos directamente con el <b>1</b> después del 52, porque ese formato se usa también para vincular el bot a WhatsApp.</p>
         <p style="margin:10px 0 0;color:rgba(233,242,255,.7);font-size:12px">Otros países: ingresa código de país + número sin signos ni espacios. Ej: USA <b>1</b> + 10 dígitos, Argentina <b>54 9</b> + área + número, Colombia <b>57</b> + 10 dígitos.</p>
       </div>
     </div>
