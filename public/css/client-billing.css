@@ -605,6 +605,202 @@
 .svc-btn.danger:hover{background:color-mix(in srgb,var(--danger) 22%,transparent)}
 .svc-btn i{font-size:14px}
 
+/* =========================================================
+   WALLET / MIS CRÉDITOS
+   ========================================================= */
+.wlt-page{display:flex;flex-direction:column;gap:18px;max-width:1100px}
+
+/* Cards de saldo (USD + MXN) */
+.wlt-balances{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.wlt-card{
+  position:relative;
+  overflow:hidden;
+  padding:20px 22px;
+  border-radius:22px;
+  background:var(--card);
+  border:1px solid color-mix(in srgb,var(--acc) 28%,transparent);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-height:170px;
+}
+.wlt-card-bg{
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 22%,transparent),color-mix(in srgb,var(--acc2) 16%,transparent));
+  z-index:0;
+}
+.wlt-card.usd .wlt-card-bg{
+  background:linear-gradient(135deg,color-mix(in srgb,#3b82f6 26%,transparent),color-mix(in srgb,#2563eb 18%,transparent));
+}
+.wlt-card.mxn .wlt-card-bg{
+  background:linear-gradient(135deg,color-mix(in srgb,#10b981 26%,transparent),color-mix(in srgb,#059669 18%,transparent));
+}
+.wlt-card:before{
+  content:"";
+  position:absolute;
+  top:-60px;right:-60px;
+  width:180px;height:180px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.18),transparent 65%);
+  z-index:1;
+  filter:blur(6px);
+  pointer-events:none;
+}
+.wlt-card-top,.wlt-card-mid,.wlt-card-foot{position:relative;z-index:2}
+.wlt-card-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.wlt-card-cur{
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.16em;
+  color:var(--text);
+  background:color-mix(in srgb,var(--card) 80%,transparent);
+  padding:5px 12px;
+  border-radius:999px;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  border:1px solid color-mix(in srgb,var(--acc) 22%,transparent);
+}
+.wlt-card-flag{font-size:24px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+.wlt-card-mid small{
+  display:block;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:color-mix(in srgb,var(--text) 65%,transparent);
+}
+.wlt-card-mid b{
+  display:block;
+  margin-top:6px;
+  font-size:38px;
+  font-weight:900;
+  letter-spacing:-.025em;
+  color:var(--text);
+  font-family:var(--display-font);
+  line-height:1;
+}
+.wlt-card-foot{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:auto;
+}
+.wlt-stat{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:5px 10px;
+  border-radius:10px;
+  font-size:11.5px;
+  font-weight:800;
+  background:color-mix(in srgb,var(--card) 65%,transparent);
+  border:1px solid color-mix(in srgb,var(--text) 12%,transparent);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+.wlt-stat i{font-size:13px}
+.wlt-stat.in{color:#10b981}
+.wlt-stat.out{color:var(--danger)}
+
+/* Info box */
+.wlt-info-box{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:14px 16px;
+  border-radius:16px;
+  background:color-mix(in srgb,var(--acc) 8%,transparent);
+  border:1px solid color-mix(in srgb,var(--acc) 22%,transparent);
+}
+.wlt-info-box>i{font-size:20px;color:var(--acc);flex-shrink:0;margin-top:1px}
+.wlt-info-box b{display:block;font-size:13.5px;font-weight:800;color:var(--text);margin-bottom:3px}
+.wlt-info-box span{display:block;font-size:12.5px;color:color-mix(in srgb,var(--text) 75%,transparent);font-weight:600;line-height:1.55}
+
+/* Tabla de transacciones */
+.wlt-tx-card{
+  border-radius:22px;
+  background:var(--card);
+  border:1px solid color-mix(in srgb,var(--acc) 22%,transparent);
+  overflow:hidden;
+}
+.wlt-tx-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:14px 18px;
+  border-bottom:1px solid color-mix(in srgb,var(--acc) 18%,transparent);
+}
+.wlt-tx-head>div{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--text)}
+.wlt-tx-head i{color:var(--acc);font-size:16px}
+.wlt-tx-head small{font-size:11.5px;color:color-mix(in srgb,var(--text) 60%,transparent);font-weight:700}
+
+.wlt-tx-wrap{overflow-x:auto}
+.wlt-tx-table{
+  width:100%;
+  border-collapse:collapse;
+}
+.wlt-tx-table th{
+  text-align:left;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:color-mix(in srgb,var(--text) 55%,transparent);
+  padding:11px 18px;
+  background:color-mix(in srgb,var(--acc) 6%,transparent);
+  border-bottom:1px solid color-mix(in srgb,var(--acc) 16%,transparent);
+}
+.wlt-tx-table td{
+  padding:13px 18px;
+  border-bottom:1px solid color-mix(in srgb,var(--acc) 10%,transparent);
+  font-size:12.5px;
+  color:var(--text);
+  font-weight:600;
+  vertical-align:middle;
+}
+.wlt-tx-table tr:last-child td{border-bottom:0}
+.wlt-empty-row{text-align:center;color:color-mix(in srgb,var(--text) 55%,transparent);padding:32px 18px!important}
+
+.wlt-tx{display:flex;align-items:center;gap:10px}
+.wlt-tx-ico{
+  width:36px;height:36px;
+  flex:0 0 auto;
+  border-radius:10px;
+  display:grid;place-items:center;
+  font-size:17px;
+}
+.wlt-tx-ico.in{background:color-mix(in srgb,#10b981 18%,transparent);color:#10b981}
+.wlt-tx-ico.out{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger)}
+.wlt-tx-ico.mid{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc)}
+.wlt-tx-text b{display:block;font-size:13px;font-weight:800;color:var(--text)}
+.wlt-tx-text small{display:block;font-size:11px;color:color-mix(in srgb,var(--text) 60%,transparent);margin-top:2px}
+
+.wlt-cur{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  color:var(--acc);
+  background:color-mix(in srgb,var(--acc) 12%,transparent);
+  padding:4px 9px;
+  border-radius:8px;
+  display:inline-block;
+}
+.wlt-amt{font-weight:900;font-size:14px;letter-spacing:-.005em}
+.wlt-amt.in{color:#10b981}
+.wlt-amt.out{color:var(--danger)}
+.wlt-bal{font-weight:800;color:color-mix(in srgb,var(--text) 80%,transparent)}
+.wlt-date{font-size:11.5px;color:color-mix(in srgb,var(--text) 60%,transparent);font-weight:600;white-space:nowrap}
+
 /* ============== RESPONSIVE ============== */
 @media(max-width:760px){
   .inv-page-head h1{font-size:26px}
@@ -618,6 +814,10 @@
   .inv-table th,.inv-table td{padding:10px 12px;font-size:12px}
   .inv-total-row b{font-size:16px;padding:6px 14px}
   .svc-grid{grid-template-columns:1fr}
+  .wlt-balances{grid-template-columns:1fr}
+  .wlt-card-mid b{font-size:32px}
+  .wlt-tx-table th,.wlt-tx-table td{padding:10px 12px;font-size:11.5px}
+  .wlt-tx-ico{width:32px;height:32px;font-size:15px}
 }
 @media(max-width:480px){
   .inv-card{padding:10px;gap:10px}
