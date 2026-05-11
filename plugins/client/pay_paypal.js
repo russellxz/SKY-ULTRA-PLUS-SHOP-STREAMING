@@ -175,7 +175,10 @@ function router(ctx) {
       const inv = loadInvoice(ctx, invoice_id, u.id);
       if (!inv) return res.status(404).send("Factura no encontrada.");
       if (String(inv.status).toLowerCase() === "paid") return res.redirect(`/invoices/${invoice_id}?paid=1`);
-      if (String(inv.status).toLowerCase() !== "pending") return res.status(400).send("Factura no disponible para pago.");
+      {
+        const st = String(inv.status).toLowerCase();
+        if (st !== "pending" && st !== "suspended") return res.status(400).send("Factura no disponible para pago.");
+      }
 
       const p = invoiceProduct(ctx, inv);
       if (!p) return res.status(400).send("Producto inválido.");

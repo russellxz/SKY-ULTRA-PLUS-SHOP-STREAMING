@@ -11,7 +11,7 @@ function invoiceProduct(ctx,inv){
   return ctx.db.sqlite.prepare("SELECT * FROM products WHERE id=?").get(it.reference_id);
 }
 function paymentButtons(ctx,inv){
-  if(inv.status!=='pending')return '';
+  if(inv.status!=='pending'&&inv.status!=='suspended')return '';
   const product=invoiceProduct(ctx,inv);
   const g=(k,d="")=>ctx.db.getSetting(k,d);
   const buttons=[];
@@ -106,6 +106,7 @@ function detail(ctx,inv,msg=""){
         ${phone?`<span><i class="ri-phone-line"></i> ${h(ctx,phone)}</span>`:''}
       </div>
       ${methodRow}
+      ${inv.status==='suspended'?`<div class="notice" style="background:rgba(245,158,11,.14);color:#fde68a;border:1px solid rgba(245,158,11,.32);border-radius:14px;padding:12px 14px;margin:8px 0;font-size:13px;font-weight:700"><i class="ri-error-warning-line"></i> Esta factura fue suspendida por falta de pago. Aún puedes pagarla para reactivar tu servicio.</div>`:''}
       <div class="inv-actions">
         <a class="inv-btn primary" href="/invoices/${inv.id}/print" target="_blank"><i class="ri-eye-line"></i> Ver / descargar</a>
         ${paymentButtons(ctx,inv)}
