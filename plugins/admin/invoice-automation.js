@@ -122,7 +122,7 @@ function tickOnce(db) {
 
   // 3) canceled → deleted (service + all invoices linked to it)
   const cancInvs = db.sqlite.prepare(
-    "SELECT id FROM invoices WHERE status='canceled' AND datetime(COALESCE(state_changed_at, canceled_at, created_at)) <= datetime(?)"
+    "SELECT id FROM invoices WHERE status='canceled' AND datetime(COALESCE(state_changed_at, created_at)) <= datetime(?)"
   ).all(cCut);
   for (const r of cancInvs) {
     const exists = db.sqlite.prepare("SELECT id FROM invoices WHERE id=?").get(r.id);
