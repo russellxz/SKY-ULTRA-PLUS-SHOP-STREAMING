@@ -26,12 +26,27 @@ function register(body) {
   return { ok: true, user: publicUser(out.user) };
 }
 
+function isPublicGet(req) {
+  if (req.method !== "GET") return false;
+  const p = req.path || "";
+  if (p === "/") return true;
+  if (p === "/store" || p.startsWith("/store/")) {
+    // Block any /store sub-path that performs a write-like action
+    if (/\/buy(-|$)/.test(p)) return false;
+    return true;
+  }
+  return false;
+}
+
 function requireUser(req, res, next) {
-  if (!req.session.user) return res.redirect("/login");
-  const u = db.getUserById(req.session.user.id);
-  if (!u) return req.session.destroy(() => res.redirect("/login"));
-  req.session.user = publicUser(u);
-  next();
+  if (req.session.user) {
+    const u = db.getUserById(req.session.user.id);
+    if (!u) return req.session.destroy(() => res.redirect("/login"));
+    req.session.user = publicUser(u);
+    return next();
+  }
+  if (isPublicGet(req)) return next();
+  return res.redirect("/login");
 }
 
 function requireAdmin(req, res, next) {
