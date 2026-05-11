@@ -203,20 +203,21 @@ html body .theme-toggle:hover{
 }
 html body .theme-toggle i{color:var(--acc)!important;text-shadow:none!important}
 
-/* Mobile menu (hamburguesa) - cambia con modo claro/oscuro y color de acento */
+/* Mobile menu (hamburguesa) - usa siempre el gradient del tema por defecto */
 html body .mobile-menu{
-  background:var(--gradient)!important;
-  border:1px solid color-mix(in srgb,var(--acc) 38%,transparent)!important;
+  background:linear-gradient(135deg,var(--acc),var(--acc2))!important;
+  background-image:linear-gradient(135deg,var(--acc),var(--acc2))!important;
+  border:1px solid color-mix(in srgb,var(--acc) 50%,transparent)!important;
   color:#fff!important;
   border-radius:12px!important;
   width:46px!important;height:46px!important;
   display:inline-grid!important;place-items:center!important;
-  box-shadow:0 6px 18px color-mix(in srgb,var(--acc) 35%,transparent)!important;
+  box-shadow:0 6px 18px color-mix(in srgb,var(--acc) 38%,transparent)!important;
   cursor:pointer;
   flex:0 0 auto;
-  transition:transform .18s,box-shadow .18s;
+  transition:transform .18s,box-shadow .18s,background .25s;
 }
-html body .mobile-menu:hover{transform:translateY(-1px);box-shadow:0 8px 22px color-mix(in srgb,var(--acc) 45%,transparent)!important}
+html body .mobile-menu:hover{transform:translateY(-1px);box-shadow:0 10px 24px color-mix(in srgb,var(--acc) 48%,transparent)!important}
 html body .mobile-menu i{color:#fff!important;font-size:22px!important;line-height:1!important}
 
 /* Topbar brand: logo + nombre de la tienda (siempre visible, sin interacción) */

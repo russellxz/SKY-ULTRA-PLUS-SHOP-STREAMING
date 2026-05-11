@@ -711,20 +711,6 @@
 .wlt-stat.in{color:#10b981}
 .wlt-stat.out{color:var(--danger)}
 
-/* Info box */
-.wlt-info-box{
-  display:flex;
-  align-items:flex-start;
-  gap:12px;
-  padding:14px 16px;
-  border-radius:16px;
-  background:color-mix(in srgb,var(--acc) 8%,transparent);
-  border:1px solid color-mix(in srgb,var(--acc) 22%,transparent);
-}
-.wlt-info-box>i{font-size:20px;color:var(--acc);flex-shrink:0;margin-top:1px}
-.wlt-info-box b{display:block;font-size:13.5px;font-weight:800;color:var(--text);margin-bottom:3px}
-.wlt-info-box span{display:block;font-size:12.5px;color:color-mix(in srgb,var(--text) 75%,transparent);font-weight:600;line-height:1.55}
-
 /* Tabla de transacciones */
 .wlt-tx-card{
   border-radius:22px;
@@ -773,28 +759,49 @@
 
 .wlt-tx{display:flex;align-items:center;gap:10px}
 .wlt-tx-ico{
-  width:36px;height:36px;
+  width:38px;height:38px;
   flex:0 0 auto;
-  border-radius:10px;
+  border-radius:11px;
   display:grid;place-items:center;
-  font-size:17px;
+  font-size:18px;
 }
 .wlt-tx-ico.in{background:color-mix(in srgb,#10b981 18%,transparent);color:#10b981}
 .wlt-tx-ico.out{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger)}
 .wlt-tx-ico.mid{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc)}
+.wlt-tx-thumb{
+  width:38px;height:38px;
+  flex:0 0 auto;
+  border-radius:11px;
+  overflow:hidden;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 22%,var(--card)),color-mix(in srgb,var(--acc2) 16%,var(--card)));
+  border:1px solid color-mix(in srgb,var(--acc) 24%,transparent);
+}
+.wlt-tx-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.wlt-tx-thumb-fb{
+  width:100%;height:100%;
+  display:grid;place-items:center;
+  font-size:18px;
+  color:#fff;
+  opacity:.8;
+}
 .wlt-tx-text b{display:block;font-size:13px;font-weight:800;color:var(--text)}
-.wlt-tx-text small{display:block;font-size:11px;color:color-mix(in srgb,var(--text) 60%,transparent);margin-top:2px}
+.wlt-tx-text small{display:block;font-size:11px;color:color-mix(in srgb,var(--text) 60%,transparent);margin-top:2px;display:inline-flex;align-items:center;gap:4px}
+.wlt-tx-text small i{font-size:12px;color:var(--acc)}
 
+/* Pills de moneda con buen contraste */
 .wlt-cur{
+  display:inline-block;
   font-size:11px;
   font-weight:900;
-  letter-spacing:.08em;
-  color:var(--acc);
-  background:color-mix(in srgb,var(--acc) 12%,transparent);
-  padding:4px 9px;
+  letter-spacing:.1em;
+  color:#fff;
+  padding:5px 10px;
   border-radius:8px;
-  display:inline-block;
+  background:color-mix(in srgb,var(--acc) 75%,#000);
+  border:1px solid color-mix(in srgb,var(--acc) 60%,transparent);
 }
+.wlt-cur.usd{background:linear-gradient(135deg,#3b82f6,#2563eb);border-color:#1d4ed8}
+.wlt-cur.mxn{background:linear-gradient(135deg,#10b981,#059669);border-color:#047857}
 .wlt-amt{font-weight:900;font-size:14px;letter-spacing:-.005em}
 .wlt-amt.in{color:#10b981}
 .wlt-amt.out{color:var(--danger)}
