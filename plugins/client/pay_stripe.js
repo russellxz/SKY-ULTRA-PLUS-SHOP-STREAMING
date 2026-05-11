@@ -35,8 +35,78 @@ function absoluteBase(req) {
 }
 function escHtml(s) { return String(s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
+function notAvailableHtml(method) {
+  return `<!doctype html><meta charset="utf-8">
+<div style="font-family:system-ui;max-width:680px;margin:32px auto;padding:20px;background:#111827;color:#e5e7eb;border-radius:14px">
+  <h2 style="margin:0 0 8px">Este método aún no está disponible</h2>
+  <p>El administrador no ha configurado <b>${escHtml(method)}</b>. Por favor usa otro método de pago.</p>
+  <p><a href="/store" style="color:#a5b4fc">← Volver a la tienda</a></p>
+</div>`;
+}
+
+async function startStripeCheckout(ctx, req, inv, p) {
+  const cli = getStripe(ctx.db);
+  if (!cli) throw new Error("Stripe no inicializado");
+  const base = absoluteBase(req);
+  const currency = String(inv.currency || "USD").toUpperCase();
+  const curLower = currency.toLowerCase();
+  const amount = Number(inv.total || 0);
+  const session = await cli.checkout.sessions.create({
+    mode: "payment",
+    line_items: [{
+      price_data: {
+        currency: curLower,
+        product_data: { name: (p && p.name) || `Factura #${inv.number || inv.id}` },
+        unit_amount: Math.round(amount * 100),
+      },
+      quantity: 1,
+    }],
+    allow_promotion_codes: false,
+    metadata: { invoice_id: String(inv.id), product_id: String(p?.id || ""), user_id: String(inv.user_id) },
+    payment_intent_data: {
+      metadata: { invoice_id: String(inv.id), product_id: String(p?.id || ""), user_id: String(inv.user_id) }
+    },
+    success_url: `${base}/pay/stripe/return?invoice_id=${inv.id}`,
+    cancel_url:  `${base}/invoices/${inv.id}?canceled=1`,
+  });
+  if (!session?.url) throw new Error("No se pudo obtener la URL de Stripe Checkout.");
+  return session.url;
+}
+
 function router(ctx) {
   const r = express.Router();
+  const payments = require("../../core/payments");
+
+  /* ===== Compra directa desde la tienda con Stripe ===== */
+  r.get("/buy", async (req, res) => {
+    const en = ctx.db.getSetting("stripe_enabled", "0") === "1"
+      && !!ctx.db.getSetting("stripe_pk", "")
+      && !!ctx.db.getSetting("stripe_sk", "");
+    if (!en) return res.status(400).type("html").send(notAvailableHtml("Stripe"));
+    const pid = Number(req.query.product_id || 0);
+    if (!pid) return res.status(400).send("Falta product_id");
+    const out = payments.findOrCreatePendingInvoice(ctx.db, req.session.user.id, pid);
+    if (!out.ok) return res.status(400).type("html").send(`<div style="font-family:system-ui;padding:20px">${escHtml(out.error)} <a href="/store/product/${pid}">Volver</a></div>`);
+    if (!payments.productAcceptsProvider(out.product, "stripe")) return res.status(400).send("Este producto no acepta Stripe.");
+
+    const currency = String(out.invoice.currency || "USD").toLowerCase();
+    const min = MINIMUMS[currency] ?? 0.50;
+    if (Number(out.invoice.total) < min) {
+      return res.status(400).type("html").send(`<!doctype html><meta charset="utf-8">
+        <div style="font-family:system-ui;max-width:680px;margin:32px auto;padding:16px">
+          <h2 style="margin:0 0 8px">Importe demasiado bajo para Stripe</h2>
+          <p>Stripe exige un mínimo de <b>${out.invoice.currency} ${min.toFixed(2)}</b>.</p>
+          <p><a href="/invoices/${out.invoice.id}">← Volver a la factura</a></p>
+        </div>`);
+    }
+    try {
+      const url = await startStripeCheckout(ctx, req, out.invoice, out.product);
+      return res.redirect(303, url);
+    } catch (e) {
+      console.error("[stripe] buy:", e);
+      return res.status(500).send("Error: " + (e.message || e));
+    }
+  });
 
   /* ===== GET /pay/stripe?invoice_id=... — crea sesión de Checkout ===== */
   r.get("/", async (req, res) => {

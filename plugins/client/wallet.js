@@ -1,5 +1,6 @@
 "use strict";
 const express = require("express");
+const paymentsLib = require("../../core/payments");
 const config = { key: "client_wallet", name: "Mis créditos", icon: "ri-wallet-3-line", route: "/wallet", area: "client", category: "Facturación", order: 20 };
 
 function h(ctx,v){return ctx.layout.escapeHtml(v||"")}
@@ -20,6 +21,12 @@ function txTypeInfo(t){
   return map[t]||[String(t||"Movimiento"),"ri-exchange-line","mid"];
 }
 
+function methodBadge(ctx, provider){
+  const label = paymentsLib.providerLabel(provider);
+  const cls = paymentsLib.providerBadgeClass(provider);
+  return `<span class="wlt-method ${cls}">${h(ctx,label)}</span>`;
+}
+
 function router(ctx) {
   const r = express.Router();
 
@@ -28,12 +35,13 @@ function router(ctx) {
     const wUSD=ctx.db.getWallet(uid,"USD");
     const wMXN=ctx.db.getWallet(uid,"MXN");
 
-    // Movimientos: JOIN con wallets para obtener currency, LEFT JOIN con invoices/items/products para info del producto
-    const txs=ctx.db.sqlite.prepare(`
+    // Movimientos de wallet (créditos): JOIN con wallets + invoice + producto
+    const wRows=ctx.db.sqlite.prepare(`
       SELECT
-        wt.*,
+        wt.id, wt.amount, wt.balance_after, wt.created_at, wt.type, wt.note, wt.invoice_id,
         w.currency,
         i.number AS invoice_number,
+        i.payment_method AS invoice_method,
         (SELECT it.name FROM invoice_items it WHERE it.invoice_id=wt.invoice_id LIMIT 1) AS product_name,
         (SELECT p.image_path FROM invoice_items it LEFT JOIN products p ON p.id=it.reference_id WHERE it.invoice_id=wt.invoice_id LIMIT 1) AS product_image
       FROM wallet_transactions wt
@@ -41,20 +49,71 @@ function router(ctx) {
       LEFT JOIN invoices i ON i.id=wt.invoice_id
       WHERE wt.user_id=?
       ORDER BY wt.id DESC
-      LIMIT 50
+      LIMIT 100
     `).all(uid);
 
-    // Stats por moneda
-    const totalIn=(cur)=>txs.filter(t=>t.currency===cur&&Number(t.amount)>0).reduce((s,t)=>s+Number(t.amount),0);
-    const totalOut=(cur)=>txs.filter(t=>t.currency===cur&&Number(t.amount)<0).reduce((s,t)=>s+Math.abs(Number(t.amount)),0);
+    // Pagos externos (PayPal/Stripe) — los créditos ya van en wallet_transactions, los excluimos para no duplicar
+    const eRows=ctx.db.sqlite.prepare(`
+      SELECT
+        py.id, py.amount, py.currency, py.created_at, py.provider, py.invoice_id,
+        i.number AS invoice_number,
+        i.payment_method AS invoice_method,
+        (SELECT it.name FROM invoice_items it WHERE it.invoice_id=py.invoice_id LIMIT 1) AS product_name,
+        (SELECT p.image_path FROM invoice_items it LEFT JOIN products p ON p.id=it.reference_id WHERE it.invoice_id=py.invoice_id LIMIT 1) AS product_image
+      FROM payments py
+      LEFT JOIN invoices i ON i.id=py.invoice_id
+      WHERE py.user_id=? AND py.status='paid' AND py.provider != 'credits'
+      ORDER BY py.id DESC
+      LIMIT 100
+    `).all(uid);
 
-    const txRows=txs.length?txs.map(t=>{
+    // Unimos en una sola lista ordenada por fecha
+    const wallet_items = wRows.map(t => ({
+      kind: "wallet",
+      id: t.id,
+      created_at: t.created_at,
+      amount: Number(t.amount),
+      currency: t.currency,
+      balance_after: t.balance_after,
+      type: t.type,
+      note: t.note,
+      invoice_id: t.invoice_id,
+      invoice_number: t.invoice_number,
+      product_name: t.product_name,
+      product_image: t.product_image,
+      method: t.type === "invoice_payment" ? "credits" : null,
+    }));
+    const ext_items = eRows.map(p => ({
+      kind: "external",
+      id: "p" + p.id,
+      created_at: p.created_at,
+      amount: -Math.abs(Number(p.amount)),
+      currency: p.currency,
+      balance_after: null,
+      type: "invoice_payment",
+      note: "",
+      invoice_id: p.invoice_id,
+      invoice_number: p.invoice_number,
+      product_name: p.product_name,
+      product_image: p.product_image,
+      method: p.provider,
+    }));
+    const items = wallet_items.concat(ext_items).sort((a,b) => {
+      const da = new Date(a.created_at).getTime() || 0;
+      const db_= new Date(b.created_at).getTime() || 0;
+      return db_ - da;
+    }).slice(0, 150);
+
+    // Stats: solo movimientos de wallet
+    const totalIn=(cur)=>wRows.filter(t=>t.currency===cur&&Number(t.amount)>0).reduce((s,t)=>s+Number(t.amount),0);
+    const totalOut=(cur)=>wRows.filter(t=>t.currency===cur&&Number(t.amount)<0).reduce((s,t)=>s+Math.abs(Number(t.amount)),0);
+
+    const txRows=items.length?items.map(t=>{
       const info=txTypeInfo(t.type);
       const amt=Number(t.amount);
       const sign=amt>=0?'+':'';
       const cls=amt>=0?'in':'out';
 
-      // Concepto: si es pago de factura y hay producto, mostrar producto + factura
       let conceptHtml;
       if (t.type==='invoice_payment' && t.product_name) {
         const thumb = t.product_image
@@ -77,20 +136,32 @@ function router(ctx) {
         </div>`;
       }
 
+      const methodHtml = t.method ? methodBadge(ctx, t.method) : `<span class="wlt-method muted">—</span>`;
+      const balHtml = (t.balance_after == null) ? '—' : fmt(t.balance_after);
+
       return `<tr class="wlt-row ${cls}">
         <td>${conceptHtml}</td>
         <td><span class="wlt-cur ${(t.currency||'').toLowerCase()}">${h(ctx,t.currency||'—')}</span></td>
+        <td>${methodHtml}</td>
         <td class="wlt-amt ${cls}">${sign}${fmt(amt)}</td>
-        <td class="wlt-bal">${fmt(t.balance_after)}</td>
+        <td class="wlt-bal">${balHtml}</td>
         <td class="wlt-date">${fmtDate(t.created_at)}</td>
       </tr>`;
-    }).join(""):`<tr><td colspan="5" class="wlt-empty-row">Aún no hay movimientos.</td></tr>`;
+    }).join(""):`<tr><td colspan="6" class="wlt-empty-row">Aún no hay movimientos.</td></tr>`;
+    const txCount = items.length;
 
     res.renderPage({
       title:"Mis créditos",
       area:"client",
       registry:reg(ctx),
       content:`<link rel="stylesheet" href="/public/css/client-billing.css?v=3">
+      <style>
+        .wlt-method{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+        .wlt-method.credit{background:rgba(124,58,237,.18);color:#c4b5fd;border:1px solid rgba(124,58,237,.4)}
+        .wlt-method.pp{background:rgba(0,156,222,.16);color:#7dd3fc;border:1px solid rgba(0,156,222,.4)}
+        .wlt-method.stripe{background:rgba(99,91,255,.18);color:#a5b4fc;border:1px solid rgba(99,91,255,.45)}
+        .wlt-method.muted{background:rgba(255,255,255,.08);color:#9aa6bd;border:1px solid rgba(255,255,255,.14)}
+      </style>
       <div class="wlt-page">
         <header class="inv-page-head">
           <h1 class="display-title">Mis créditos</h1>
@@ -134,7 +205,7 @@ function router(ctx) {
         <div class="wlt-tx-card">
           <div class="wlt-tx-head">
             <div><i class="ri-exchange-funds-line"></i> <b>Movimientos recientes</b></div>
-            <small>${txs.length} movimientos</small>
+            <small>${txCount} movimientos</small>
           </div>
           <div class="wlt-tx-wrap">
             <table class="wlt-tx-table">
@@ -142,6 +213,7 @@ function router(ctx) {
                 <tr>
                   <th>Concepto</th>
                   <th>Moneda</th>
+                  <th>Método</th>
                   <th>Cambio</th>
                   <th>Saldo</th>
                   <th>Fecha</th>

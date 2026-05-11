@@ -68,6 +68,11 @@ function detail(ctx,inv,msg=""){
     <td class="inv-item-cell">${inv.currency} ${billing.money(i.total)}</td>
   </tr>`).join("");
   const del=inv.allocations.map(a=>`<div class="inv-del-box"><div class="inv-del-head"><i class="ri-key-2-line"></i> <b>Información de entrega</b></div><textarea readonly>${h(ctx,a.delivered_content)}</textarea></div>`).join("");
+  const methodLabel = payments.providerLabel(inv.payment_method);
+  const methodCls = payments.providerBadgeClass(inv.payment_method);
+  const methodRow = (inv.status==='paid' && inv.payment_method)
+    ? `<div class="inv-user-row"><span><i class="ri-bank-card-line"></i> Pagado con <b class="inv-method-pill ${methodCls}">${h(ctx,methodLabel)}</b></span>${inv.paid_at?`<span><i class="ri-time-line"></i> ${h(ctx,fmtShort(inv.paid_at))}</span>`:''}</div>`
+    : '';
   return `<link rel="stylesheet" href="/public/css/client-billing.css?v=1">
   <style>
     .inv-actions .inv-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
@@ -75,6 +80,11 @@ function detail(ctx,inv,msg=""){
     .inv-actions .inv-btn.pp-ipn{background:linear-gradient(135deg,#0070ba,#005ea6);color:#fff;border:0}
     .inv-actions .inv-btn.stripe{background:linear-gradient(135deg,#635bff,#3b82f6);color:#fff;border:0}
     .inv-actions .inv-btn.pp:hover,.inv-actions .inv-btn.pp-ipn:hover,.inv-actions .inv-btn.stripe:hover{filter:brightness(1.07)}
+    .inv-method-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-left:4px}
+    .inv-method-pill.credit{background:rgba(124,58,237,.18);color:#c4b5fd;border:1px solid rgba(124,58,237,.4)}
+    .inv-method-pill.pp{background:rgba(0,156,222,.16);color:#7dd3fc;border:1px solid rgba(0,156,222,.4)}
+    .inv-method-pill.stripe{background:rgba(99,91,255,.18);color:#a5b4fc;border:1px solid rgba(99,91,255,.45)}
+    .inv-method-pill.muted{background:rgba(255,255,255,.08);color:#9aa6bd;border:1px solid rgba(255,255,255,.14)}
   </style>${msg}
   <div class="inv-detail">
     <a class="inv-back" href="/invoices"><i class="ri-arrow-left-line"></i></a>
@@ -95,6 +105,7 @@ function detail(ctx,inv,msg=""){
         <span><i class="ri-mail-line"></i> ${h(ctx,inv.email||'')}</span>
         ${phone?`<span><i class="ri-phone-line"></i> ${h(ctx,phone)}</span>`:''}
       </div>
+      ${methodRow}
       <div class="inv-actions">
         <a class="inv-btn primary" href="/invoices/${inv.id}/print" target="_blank"><i class="ri-eye-line"></i> Ver / descargar</a>
         ${paymentButtons(ctx,inv)}
@@ -150,6 +161,9 @@ function router(ctx){
       const st=statusInfo(i.status);
       const typeLabel=i.type==='renewal'?'renewal':'product';
       const thumb=i.product_image?`<img src="${h(ctx,i.product_image)}" alt="">`:`<i class="ri-file-list-3-line"></i>`;
+      const methodTag = i.status==='paid' && i.payment_method
+        ? `<span class="inv-card-method ${payments.providerBadgeClass(i.payment_method)}">${h(ctx,payments.providerLabel(i.payment_method))}</span>`
+        : '';
       return `<a class="inv-card" href="/invoices/${i.id}">
         <div class="inv-card-thumb">${thumb}<span class="inv-card-checkmark"><i class="ri-checkbox-circle-fill"></i></span></div>
         <div class="inv-card-body">
@@ -160,6 +174,7 @@ function router(ctx){
           <div class="inv-card-mid">
             <span class="inv-card-product">${h(ctx,i.product_name||i.type||'Factura')}</span>
             <span class="inv-card-type">${h(ctx,typeLabel)}</span>
+            ${methodTag}
           </div>
           <div class="inv-card-bottom">
             <span class="inv-card-date"><i class="ri-time-line"></i> ${fmtDate(i.created_at)}</span>
@@ -174,6 +189,12 @@ function router(ctx){
 
     res.renderPage({title:"Mis facturas",area:"client",registry:reg(ctx),content:`
       <link rel="stylesheet" href="/public/css/client-billing.css?v=1">
+      <style>
+        .inv-card-method{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-left:6px}
+        .inv-card-method.credit{background:rgba(124,58,237,.18);color:#c4b5fd;border:1px solid rgba(124,58,237,.4)}
+        .inv-card-method.pp{background:rgba(0,156,222,.16);color:#7dd3fc;border:1px solid rgba(0,156,222,.4)}
+        .inv-card-method.stripe{background:rgba(99,91,255,.18);color:#a5b4fc;border:1px solid rgba(99,91,255,.45)}
+      </style>
       <div class="inv-page">
         <header class="inv-page-head">
           <h1 class="display-title">Mis facturas</h1>
