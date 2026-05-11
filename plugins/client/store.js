@@ -13,6 +13,9 @@ function buyButton(ctx, req, p, available){
   if (available <= 0){
     return `<button class="sp-buy-btn" disabled><i class="ri-close-circle-line"></i> Sin stock</button>`;
   }
+  if (!req.session.user) {
+    return `<div class="sp-buy-methods"><a class="sp-buy-btn" href="/register" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;text-decoration:none;justify-content:center"><i class="ri-user-add-line"></i> Crear cuenta para comprar</a><a class="sp-buy-btn" href="/login" style="background:rgba(255,255,255,.08);border:1px solid rgba(139,92,246,.3);color:inherit;text-decoration:none;justify-content:center"><i class="ri-login-circle-line"></i> Ya tengo cuenta</a></div>`;
+  }
   const w = wallet(ctx, req.session.user.id, p.currency);
   const enough = Number(w.balance || 0) >= Number(p.price || 0);
 
@@ -104,9 +107,10 @@ function router(ctx) {
     const q = String(req.query.q||"").trim().toLowerCase();
     if (q) products = products.filter(p=>String(p.name||"").toLowerCase().includes(q)||String(p.description||"").toLowerCase().includes(q));
 
-    // Wallets
-    const wUSD = ctx.db.getWallet(req.session.user.id, "USD");
-    const wMXN = ctx.db.getWallet(req.session.user.id, "MXN");
+    // Wallets (sólo si hay sesión)
+    const wUSD = req.session.user ? ctx.db.getWallet(req.session.user.id, "USD") : { balance: 0 };
+    const wMXN = req.session.user ? ctx.db.getWallet(req.session.user.id, "MXN") : { balance: 0 };
+    const showCredits = !!req.session.user;
 
     const err = req.query.error?`<div class="notice error">${h(ctx,req.query.error)}</div>`:"";
 
@@ -151,10 +155,10 @@ function router(ctx) {
           ${heroIcon}
           <h1 class="display-title sp-hero-title"><span class="sp-deco">✦</span> ${h(ctx,selected.name)} <span class="sp-deco">✦</span></h1>
           <p class="sp-hero-desc">${h(ctx,selected.description||"Aquí puedes encontrar una variedad de planes con diferentes niveles de rendimiento y precios. Escoge el plan que mejor se adapte a tus necesidades.")}</p>
-          <div class="sp-credits">
+          ${showCredits?`<div class="sp-credits">
             <span class="sp-credit-pill"><span class="sp-credit-cur">Crédito MXN</span><b>$${billing.money(wMXN.balance)}</b></span>
             <span class="sp-credit-pill"><span class="sp-credit-cur">Crédito USD</span><b>$${billing.money(wUSD.balance)}</b></span>
-          </div>
+          </div>`:""}
         </div>
       </section>` : '';
 
@@ -176,8 +180,8 @@ function router(ctx) {
 
     // Cards de productos (con bullets de descripción y ciclo)
     const productsHtml = products.length ? products.map(p=>{
-      const w = wallet(ctx, req.session.user.id, p.currency);
-      const enough = Number(w.balance || 0) >= Number(p.price || 0);
+      const w = req.session.user ? wallet(ctx, req.session.user.id, p.currency) : null;
+      const enough = w ? Number(w.balance || 0) >= Number(p.price || 0) : true;
       const lines = String(p.description||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
       const bulletLines = lines.slice(0,4);
       const descRest = lines.slice(4).join(" ");
@@ -202,7 +206,7 @@ function router(ctx) {
             <div class="sp-card-price"><small>Precio</small><b>${h(ctx,p.currency)} $${billing.money(p.price)}</b></div>
             <a class="sp-details-link" href="/store/product/${p.id}"><i class="ri-information-line"></i></a>
           </div>
-          ${p.available>0&&!enough?`<small class="sp-card-warn"><i class="ri-error-warning-line"></i> Crédito insuficiente en ${p.currency}</small>`:""}
+          ${req.session.user&&p.available>0&&!enough?`<small class="sp-card-warn"><i class="ri-error-warning-line"></i> Crédito insuficiente en ${p.currency}</small>`:""}
           ${buyButton(ctx, req, p, p.available)}
         </div>
       </article>`;
@@ -238,8 +242,10 @@ function router(ctx) {
     const descRest = lines.slice(4).join(" ");
     const bullets = bulletLines.length ? `<ul class="sp-card-bullets">${bulletLines.map(l=>`<li><i class="ri-arrow-right-s-line"></i><span>${h(ctx,l)}</span></li>`).join("")}</ul>` : "";
     const descBlock = descRest ? `<p class="sp-detail-desc">${h(ctx,descRest)}</p>` : "";
-    const wUSD = ctx.db.getWallet(req.session.user.id, "USD");
-    const wMXN = ctx.db.getWallet(req.session.user.id, "MXN");
+    const wUSD = req.session.user ? ctx.db.getWallet(req.session.user.id, "USD") : { balance: 0 };
+    const wMXN = req.session.user ? ctx.db.getWallet(req.session.user.id, "MXN") : { balance: 0 };
+    const showCredits = !!req.session.user;
+    const guestInfo = !req.session.user ? `<div class="sp-detail-info-box" style="background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.32);color:#c4b5fd"><i class="ri-information-line"></i> Para comprar este producto necesitas <a href="/register" style="color:inherit;font-weight:800;text-decoration:underline">crear una cuenta</a> o <a href="/login" style="color:inherit;font-weight:800;text-decoration:underline">iniciar sesión</a>.</div>` : "";
     res.renderPage({ title: p.name, area: "client", registry: require("../../core/pluginLoader").registry(ctx.db), content: `<link rel="stylesheet" href="/public/css/store-modern.css?v=6">
     <style>
       .sp-buy-methods{display:flex;flex-direction:column;gap:8px;margin-top:8px}
@@ -248,7 +254,7 @@ function router(ctx) {
       .sp-buy-btn.pp-ipn{background:linear-gradient(135deg,#0070ba,#005ea6);color:#fff;border:0}
       .sp-buy-btn.stripe{background:linear-gradient(135deg,#635bff,#3b82f6);color:#fff;border:0}
       .sp-buy-btn[disabled]{opacity:.55;cursor:not-allowed}
-    </style>${err}<div class="sp-detail-page"><a class="sp-back-link" href="/store?cat=${p.cat_id}"><i class="ri-arrow-left-line"></i> Volver a ${h(ctx,p.cat_name||'tienda')}</a><div class="sp-detail"><div class="sp-detail-image">${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-card-img-fallback"><i class="ri-image-2-line"></i></div>`}${stockBadge}</div><div class="sp-detail-info"><span class="sp-product-cat">${h(ctx,p.cat_name||'Producto')}</span><h1 class="display-title"><i class="ri-vip-diamond-fill"></i> ${h(ctx,p.name)}</h1><span class="sp-cycle-pill"><i class="ri-time-line"></i> ${cycleLabel(p)}</span>${bullets}${descBlock}<div class="sp-detail-price"><small>Precio</small><b>${p.currency} $${billing.money(p.price)}</b></div><div class="sp-credits"><span class="sp-credit-pill"><span class="sp-credit-cur">Crédito MXN</span><b>$${billing.money(wMXN.balance)}</b></span><span class="sp-credit-pill"><span class="sp-credit-cur">Crédito USD</span><b>$${billing.money(wUSD.balance)}</b></span></div><div class="sp-detail-info-box"><i class="ri-information-line"></i> Al pagar con crédito se genera una factura pagada, se activa el servicio y se revela la información del stock.</div>${buyButton(ctx, req, p, available)}</div></div></div>` });
+    </style>${err}<div class="sp-detail-page"><a class="sp-back-link" href="/store?cat=${p.cat_id}"><i class="ri-arrow-left-line"></i> Volver a ${h(ctx,p.cat_name||'tienda')}</a><div class="sp-detail"><div class="sp-detail-image">${p.image_path?`<img src="${h(ctx,p.image_path)}" alt="${h(ctx,p.name)}">`:`<div class="sp-card-img-fallback"><i class="ri-image-2-line"></i></div>`}${stockBadge}</div><div class="sp-detail-info"><span class="sp-product-cat">${h(ctx,p.cat_name||'Producto')}</span><h1 class="display-title"><i class="ri-vip-diamond-fill"></i> ${h(ctx,p.name)}</h1><span class="sp-cycle-pill"><i class="ri-time-line"></i> ${cycleLabel(p)}</span>${bullets}${descBlock}<div class="sp-detail-price"><small>Precio</small><b>${p.currency} $${billing.money(p.price)}</b></div>${showCredits?`<div class="sp-credits"><span class="sp-credit-pill"><span class="sp-credit-cur">Crédito MXN</span><b>$${billing.money(wMXN.balance)}</b></span><span class="sp-credit-pill"><span class="sp-credit-cur">Crédito USD</span><b>$${billing.money(wUSD.balance)}</b></span></div>`:""}${guestInfo}${showCredits?`<div class="sp-detail-info-box"><i class="ri-information-line"></i> Al pagar con crédito se genera una factura pagada, se activa el servicio y se revela la información del stock.</div>`:""}${buyButton(ctx, req, p, available)}</div></div></div>` });
   });
   return r;
 }
