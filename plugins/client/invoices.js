@@ -1,9 +1,38 @@
 "use strict";
 const express=require("express");
 const billing=require("../../core/billing");
+const payments=require("../../core/payments");
 const config={key:"client_invoices",name:"Mis facturas",icon:"ri-file-list-3-line",route:"/invoices",area:"client",category:"Facturación",order:30};
 function h(ctx,v){return ctx.layout.escapeHtml(v||"")}
 function reg(ctx){return require("../../core/pluginLoader").registry(ctx.db)}
+function invoiceProduct(ctx,inv){
+  const it=ctx.db.sqlite.prepare("SELECT reference_id FROM invoice_items WHERE invoice_id=? AND item_type='product' LIMIT 1").get(inv.id);
+  if(!it)return null;
+  return ctx.db.sqlite.prepare("SELECT * FROM products WHERE id=?").get(it.reference_id);
+}
+function paymentButtons(ctx,inv){
+  if(inv.status!=='pending')return '';
+  const product=invoiceProduct(ctx,inv);
+  const g=(k,d="")=>ctx.db.getSetting(k,d);
+  const buttons=[];
+  if(!product||payments.productAcceptsProvider(product,"credit")){
+    buttons.push(`<form method="POST" action="/invoices/${inv.id}/pay-credit" style="margin:0"><button class="inv-btn primary"><i class="ri-wallet-3-line"></i> Pagar con crédito</button></form>`);
+  }
+  const paypalApi=g("paypal_api_enabled","0")==="1";
+  const paypalIpn=g("paypal_ipn_enabled","0")==="1";
+  const paypalOk=(!product||payments.productAcceptsProvider(product,"paypal"));
+  if(paypalApi&&paypalOk){
+    buttons.push(`<form method="POST" action="/pay/paypal/api/create" style="margin:0"><input type="hidden" name="invoice_id" value="${inv.id}"><button class="inv-btn pp"><i class="ri-paypal-line"></i> Pagar con PayPal</button></form>`);
+  }
+  if(paypalIpn&&paypalOk){
+    buttons.push(`<form method="POST" action="/pay/paypal/ipn/checkout" style="margin:0"><input type="hidden" name="invoice_id" value="${inv.id}"><button class="inv-btn pp-ipn"><i class="ri-paypal-line"></i> Pagar con PayPal (IPN)</button></form>`);
+  }
+  const stripeEn=g("stripe_enabled","0")==="1"&&g("stripe_pk","")&&g("stripe_sk","");
+  if(stripeEn&&(!product||payments.productAcceptsProvider(product,"stripe"))){
+    buttons.push(`<a class="inv-btn stripe" href="/pay/stripe?invoice_id=${inv.id}"><i class="ri-bank-card-line"></i> Pagar con Stripe</a>`);
+  }
+  return buttons.join("");
+}
 function statusInfo(s){
   const map={paid:["paid","Pagada","ri-checkbox-circle-fill"],pending:["pending","Pendiente","ri-time-fill"],canceled:["canceled","Cancelada","ri-close-circle-fill"],suspended:["suspended","Suspendida","ri-error-warning-fill"]};
   return map[s]||["muted",s,"ri-information-fill"];
@@ -39,7 +68,14 @@ function detail(ctx,inv,msg=""){
     <td class="inv-item-cell">${inv.currency} ${billing.money(i.total)}</td>
   </tr>`).join("");
   const del=inv.allocations.map(a=>`<div class="inv-del-box"><div class="inv-del-head"><i class="ri-key-2-line"></i> <b>Información de entrega</b></div><textarea readonly>${h(ctx,a.delivered_content)}</textarea></div>`).join("");
-  return `<link rel="stylesheet" href="/public/css/client-billing.css?v=1">${msg}
+  return `<link rel="stylesheet" href="/public/css/client-billing.css?v=1">
+  <style>
+    .inv-actions .inv-btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+    .inv-actions .inv-btn.pp{background:linear-gradient(135deg,#003087,#009cde);color:#fff;border:0}
+    .inv-actions .inv-btn.pp-ipn{background:linear-gradient(135deg,#0070ba,#005ea6);color:#fff;border:0}
+    .inv-actions .inv-btn.stripe{background:linear-gradient(135deg,#635bff,#3b82f6);color:#fff;border:0}
+    .inv-actions .inv-btn.pp:hover,.inv-actions .inv-btn.pp-ipn:hover,.inv-actions .inv-btn.stripe:hover{filter:brightness(1.07)}
+  </style>${msg}
   <div class="inv-detail">
     <a class="inv-back" href="/invoices"><i class="ri-arrow-left-line"></i></a>
     <div class="inv-detail-card">
@@ -61,7 +97,7 @@ function detail(ctx,inv,msg=""){
       </div>
       <div class="inv-actions">
         <a class="inv-btn primary" href="/invoices/${inv.id}/print" target="_blank"><i class="ri-eye-line"></i> Ver / descargar</a>
-        ${inv.status==='pending'?`<form method="POST" action="/invoices/${inv.id}/pay-credit" style="margin:0"><button class="inv-btn primary"><i class="ri-bank-card-line"></i> Pagar con crédito</button></form>`:''}
+        ${paymentButtons(ctx,inv)}
       </div>
     </div>
 
@@ -100,7 +136,7 @@ function router(ctx){
   r.get("/:id",(req,res)=>{
     const inv=billing.fullInvoice(ctx.db,req.params.id);
     if(!inv||Number(inv.user_id)!==Number(req.session.user.id))return res.redirect('/invoices');
-    const msg=req.query.error?`<div class="notice error">${h(ctx,req.query.error)}</div>`:req.query.paid?`<div class="notice success">Factura pagada.</div>`:"";
+    const msg=req.query.error?`<div class="notice error">${h(ctx,req.query.error)}</div>`:req.query.paid?`<div class="notice success">Factura pagada.</div>`:req.query.canceled?`<div class="notice">Pago cancelado.</div>`:"";
     res.renderPage({title:inv.number,area:"client",registry:reg(ctx),content:detail(ctx,inv,msg)});
   });
 

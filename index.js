@@ -446,6 +446,20 @@ app.get("/logout", (req, res) => {
   req.session.destroy(() => res.redirect("/login"));
 });
 
+// ===== Public payment webhooks (must run BEFORE auth.requireUser) =====
+try {
+  const payStripe = require("./plugins/client/pay_stripe");
+  app.use("/pay/stripe/webhook", payStripe.publicWebhookRouter({ db }));
+} catch (e) {
+  console.error("No se pudo montar webhook Stripe:", e.message);
+}
+try {
+  const payPaypal = require("./plugins/client/pay_paypal");
+  app.use("/pay/paypal/ipn", payPaypal.publicIPNRouter({ db }));
+} catch (e) {
+  console.error("No se pudo montar IPN PayPal:", e.message);
+}
+
 app.use(auth.requireUser);
 
 try {
