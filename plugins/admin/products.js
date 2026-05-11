@@ -198,6 +198,27 @@ function pageForm(ctx,req,res,p){
           </div>
         </section>
         <section class="prod-card">
+          <div class="prod-card-title"><i class="ri-bank-card-line"></i> Métodos de pago aceptados</div>
+          <p class="prod-card-sub">Selecciona qué métodos de pago se mostrarán a los clientes al pagar este producto.</p>
+          <div class="prod-grid two">
+            <label class="prod-toggle full">
+              <div class="prod-toggle-text"><b>Aceptar crédito de la cuenta</b><small>Permitir pagar usando los créditos del usuario.</small></div>
+              <input type="checkbox" name="accept_credit" value="1" ${(!isEdit || p.accept_credit==null || p.accept_credit) ? "checked" : ""}>
+              <em></em>
+            </label>
+            <label class="prod-toggle full">
+              <div class="prod-toggle-text"><b>Aceptar PayPal</b><small>Mostrar el botón de PayPal (API e IPN) cuando esté habilitado en el panel admin.</small></div>
+              <input type="checkbox" name="accept_paypal" value="1" ${(!isEdit || p.accept_paypal==null || p.accept_paypal) ? "checked" : ""}>
+              <em></em>
+            </label>
+            <label class="prod-toggle full">
+              <div class="prod-toggle-text"><b>Aceptar Stripe</b><small>Mostrar el botón de Stripe cuando esté habilitado en el panel admin.</small></div>
+              <input type="checkbox" name="accept_stripe" value="1" ${(!isEdit || p.accept_stripe==null || p.accept_stripe) ? "checked" : ""}>
+              <em></em>
+            </label>
+          </div>
+        </section>
+        <section class="prod-card">
           <div class="prod-card-title"><i class="ri-database-2-line"></i> Inventario visual</div>
           <p class="prod-card-sub">Cada info de entrega cuenta como 1 stock disponible.${isEdit?` <b>Disponible: ${sc.available} · Entregado: ${sc.delivered} · Total: ${sc.total}</b>`:""}</p>
           ${blocks()}
@@ -223,8 +244,8 @@ function router(ctx){
   r.use(ctx.auth.requireAdmin);
   migrate(ctx.db);
   r.get("/new",(req,res)=>pageForm(ctx,req,res,null));
-  r.post("/create",(req,res)=>{const c=cycle(req.body), img=saveImg(req.files?.image); const info=ctx.db.sqlite.prepare("INSERT INTO products (category_id,name,slug,description,price,currency,billing_type,cycle_days,cycle_minutes,delivery_mode,image_path,stock_limit,active,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(req.body.category_id,req.body.name,slug(req.body.slug||req.body.name),req.body.description||"",Number(req.body.price||0),ctx.db.normalizeCurrency(req.body.currency),c.billing_type,c.cycle_days,c.cycle_minutes,"sequential",img,0,req.body.active?1:0,ctx.db.now()); addItems(ctx,info.lastInsertRowid,req.body); res.redirect(`/admin/products/${info.lastInsertRowid}?saved=1`);});
-  r.post("/:id/update",(req,res)=>{const p=ctx.db.sqlite.prepare("SELECT * FROM products WHERE id=?").get(req.params.id); if(!p)return res.redirect("/admin/products"); const c=cycle(req.body), img=req.body.remove_image?"":(saveImg(req.files?.image)||p.image_path||""); ctx.db.sqlite.prepare("UPDATE products SET category_id=?,name=?,slug=?,description=?,price=?,currency=?,billing_type=?,cycle_days=?,cycle_minutes=?,delivery_mode=?,image_path=?,active=? WHERE id=?").run(req.body.category_id,req.body.name,slug(req.body.slug||req.body.name),req.body.description||"",Number(req.body.price||0),ctx.db.normalizeCurrency(req.body.currency),c.billing_type,c.cycle_days,c.cycle_minutes,"sequential",img,req.body.active?1:0,req.params.id); addItems(ctx,req.params.id,req.body); res.redirect(`/admin/products/${req.params.id}?saved=1`);});
+  r.post("/create",(req,res)=>{const c=cycle(req.body), img=saveImg(req.files?.image); const info=ctx.db.sqlite.prepare("INSERT INTO products (category_id,name,slug,description,price,currency,billing_type,cycle_days,cycle_minutes,delivery_mode,image_path,stock_limit,active,accept_credit,accept_paypal,accept_stripe,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(req.body.category_id,req.body.name,slug(req.body.slug||req.body.name),req.body.description||"",Number(req.body.price||0),ctx.db.normalizeCurrency(req.body.currency),c.billing_type,c.cycle_days,c.cycle_minutes,"sequential",img,0,req.body.active?1:0,req.body.accept_credit?1:0,req.body.accept_paypal?1:0,req.body.accept_stripe?1:0,ctx.db.now()); addItems(ctx,info.lastInsertRowid,req.body); res.redirect(`/admin/products/${info.lastInsertRowid}?saved=1`);});
+  r.post("/:id/update",(req,res)=>{const p=ctx.db.sqlite.prepare("SELECT * FROM products WHERE id=?").get(req.params.id); if(!p)return res.redirect("/admin/products"); const c=cycle(req.body), img=req.body.remove_image?"":(saveImg(req.files?.image)||p.image_path||""); ctx.db.sqlite.prepare("UPDATE products SET category_id=?,name=?,slug=?,description=?,price=?,currency=?,billing_type=?,cycle_days=?,cycle_minutes=?,delivery_mode=?,image_path=?,active=?,accept_credit=?,accept_paypal=?,accept_stripe=? WHERE id=?").run(req.body.category_id,req.body.name,slug(req.body.slug||req.body.name),req.body.description||"",Number(req.body.price||0),ctx.db.normalizeCurrency(req.body.currency),c.billing_type,c.cycle_days,c.cycle_minutes,"sequential",img,req.body.active?1:0,req.body.accept_credit?1:0,req.body.accept_paypal?1:0,req.body.accept_stripe?1:0,req.params.id); addItems(ctx,req.params.id,req.body); res.redirect(`/admin/products/${req.params.id}?saved=1`);});
   r.post("/:id/delete",(req,res)=>{
     const id=req.params.id;
     if(canDelete(ctx,id)){
