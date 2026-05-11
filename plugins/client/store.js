@@ -184,7 +184,7 @@ function router(ctx) {
       const bullets = bulletLines.length ? `<ul class="sp-card-bullets">${bulletLines.map(l=>`<li><i class="ri-arrow-right-s-line"></i><span>${h(ctx,l)}</span></li>`).join("")}</ul>` : "";
       const descBlock = descRest ? `<p class="sp-card-desc">${h(ctx,descRest)}</p>` : "";
       const stockBadge = p.available > 0
-        ? `<span class="sp-stock-badge ok"><i class="ri-checkbox-circle-line"></i> Available</span>`
+        ? `<span class="sp-stock-badge ok"><i class="ri-checkbox-circle-line"></i> ${p.available} en stock</span>`
         : `<span class="sp-stock-badge out"><i class="ri-close-circle-line"></i> Agotado</span>`;
       return `<article class="sp-card">
         <div class="sp-card-img">
@@ -231,7 +231,7 @@ function router(ctx) {
     const available = stock(ctx,p.id);
     const err = req.query.error ? `<div class="notice error">${h(ctx, req.query.error)}</div>` : "";
     const stockBadge = available > 0
-      ? `<span class="sp-stock-badge ok"><i class="ri-checkbox-circle-line"></i> Available</span>`
+      ? `<span class="sp-stock-badge ok"><i class="ri-checkbox-circle-line"></i> ${available} en stock</span>`
       : `<span class="sp-stock-badge out"><i class="ri-close-circle-line"></i> Agotado</span>`;
     const lines = String(p.description||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
     const bulletLines = lines.slice(0,4);

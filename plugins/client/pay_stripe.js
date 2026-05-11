@@ -66,7 +66,7 @@ async function startStripeCheckout(ctx, req, inv, p) {
     payment_intent_data: {
       metadata: { invoice_id: String(inv.id), product_id: String(p?.id || ""), user_id: String(inv.user_id) }
     },
-    success_url: `${base}/pay/stripe/return?invoice_id=${inv.id}`,
+    success_url: `${base}/pay/stripe/return?invoice_id=${inv.id}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url:  `${base}/invoices/${inv.id}?canceled=1`,
   });
   if (!session?.url) throw new Error("No se pudo obtener la URL de Stripe Checkout.");
@@ -182,7 +182,7 @@ function router(ctx) {
             user_id: String(u.id),
           }
         },
-        success_url: `${base}/pay/stripe/return?invoice_id=${inv.id}`,
+        success_url: `${base}/pay/stripe/return?invoice_id=${inv.id}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url:  `${base}/invoices/${inv.id}?canceled=1`,
       });
       if (session?.url) return res.redirect(303, session.url);
@@ -203,10 +203,47 @@ function router(ctx) {
     }
   });
 
-  /* ===== success_url — el webhook ya hizo el trabajo, redirigimos ===== */
-  r.get("/return", (req, res) => {
+  /* ===== success_url — verifica la sesión y finaliza si el webhook aún no llegó ===== */
+  r.get("/return", async (req, res) => {
     const id = Number(req.query.invoice_id || 0);
-    return res.redirect(id ? `/invoices/${id}?paid=1` : "/invoices");
+    const sessionId = String(req.query.session_id || "");
+    if (!id) return res.redirect("/invoices");
+
+    try {
+      const inv = ctx.db.sqlite.prepare("SELECT * FROM invoices WHERE id=? AND user_id=?").get(id, req.session.user.id);
+      if (!inv) return res.redirect("/invoices");
+      // Si ya está pagada (webhook llegó primero), solo redirigimos
+      if (inv.status === "paid") return res.redirect(`/invoices/${id}?paid=1`);
+
+      // Fallback: consultar la sesión en Stripe y marcar pagado
+      if (sessionId) {
+        const cli = getStripe(ctx.db);
+        if (cli) {
+          try {
+            const session = await cli.checkout.sessions.retrieve(sessionId, { expand: ["payment_intent"] });
+            const paid = session && (session.payment_status === "paid" || session.status === "complete");
+            if (paid) {
+              const out = payments.finalizeExternalPayment(ctx.db, id, {
+                provider: "stripe",
+                providerRef: session.id || sessionId,
+                amount: session.amount_total ? Number(session.amount_total) / 100 : Number(inv.total),
+                currency: (session.currency || inv.currency).toUpperCase(),
+                rawJson: session,
+              });
+              if (out.ok) console.log("[stripe] finalizado vía /return invoice=" + id);
+              else console.warn("[stripe] /return finalize error:", out.error);
+            } else {
+              console.warn("[stripe] /return: sesión no pagada todavía", { id, status: session?.status, payment_status: session?.payment_status });
+            }
+          } catch (e) {
+            console.error("[stripe] /return retrieve error:", e?.message || e);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[stripe] /return handler error:", e?.message || e);
+    }
+    return res.redirect(`/invoices/${id}?paid=1`);
   });
 
   return r;
