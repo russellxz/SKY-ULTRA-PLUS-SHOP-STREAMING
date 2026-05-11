@@ -6,7 +6,7 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "Kone457/baileys#main",
+    "@whiskeysockets/baileys": "github:DIEGO-OFC2/Bols-",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.9.1",
     "better-sqlite3-session-store": "^0.1.0",

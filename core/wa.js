@@ -62,12 +62,19 @@ async function start(db, opts = {}) {
       default: makeWASocket,
       useMultiFileAuthState,
       makeCacheableSignalKeyStore,
+      fetchLatestWaWebVersion,
       fetchLatestBaileysVersion,
     } = baileys;
 
+    // Algunas versiones del fork exponen fetchLatestWaWebVersion en lugar de
+    // fetchLatestBaileysVersion. Usamos la que esté disponible.
+    const getWaVersion = typeof fetchLatestWaWebVersion === "function"
+      ? fetchLatestWaWebVersion
+      : fetchLatestBaileysVersion;
+
     const { state: authState, saveCreds } = await useMultiFileAuthState(SESSIONS_DIR);
     let version;
-    try { ({ version } = await fetchLatestBaileysVersion()); } catch (_) { version = undefined; }
+    try { ({ version } = await getWaVersion()); } catch (_) { version = undefined; }
 
     const logger = pino({ level: "silent" });
 
