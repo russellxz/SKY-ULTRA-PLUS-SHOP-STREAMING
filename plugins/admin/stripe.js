@@ -1,6 +1,7 @@
 "use strict";
 
 const express = require("express");
+const payments = require("../../core/payments");
 
 const config = {
   key: "admin_stripe",
@@ -23,8 +24,10 @@ function page(ctx, req, res) {
   const sk       = g("stripe_sk", "");
   const whsec    = g("stripe_webhook_secret", "");
 
-  const baseUrl = (req.headers["x-forwarded-proto"] ? req.headers["x-forwarded-proto"].split(",")[0] : req.protocol) + "://" + (req.headers["x-forwarded-host"] || req.get("host"));
+  const savedBase = String(ctx.db.getSetting("public_base_url", "") || "").trim().replace(/\/+$/, "");
+  const baseUrl   = savedBase || payments.publicBaseUrl(ctx.db, req);
   const webhookUrl = `${baseUrl}/pay/stripe/webhook`;
+  const isLocal   = /localhost|127\.0\.0\.1/.test(baseUrl);
 
   const ok  = req.query.saved ? `<div class="notice success" style="margin:0 0 14px"><i class="ri-check-line"></i> Configuración guardada.</div>` : "";
   const err = req.query.error ? `<div class="notice error" style="margin:0 0 14px"><i class="ri-error-warning-line"></i> ${h(ctx, req.query.error)}</div>` : "";
@@ -69,12 +72,33 @@ ${ok}${err}
 
 <div class="st-wrap">
 
+  <form class="st-card" method="POST" action="/admin/paypal/save-base-url">
+    <div class="st-head">
+      <div class="st-head-icon" style="background:linear-gradient(135deg,#16a34a,#22c55e)"><i class="ri-link"></i></div>
+      <div><h2>URL pública de tu tienda</h2><p>Esta URL la comparten PayPal y Stripe. Si no se autodetecta, configúrala manualmente abajo.</p></div>
+    </div>
+    <div class="st-help" style="margin-top:6px">
+      <p>Tu URL pública actual es:</p>
+      <div class="st-url" style="font-size:14px;font-weight:700;color:#a5b4fc">${h(ctx, baseUrl || "(no detectada)")}</div>
+      ${isLocal ? `<p style="color:#f59e0b;margin-top:8px"><i class="ri-error-warning-line"></i> Esta URL es local. Stripe NO podrá conectarse a ella. Configura una URL pública (HTTPS) abajo, o visita tu sitio por su dominio real al menos una vez para autodetectarla.</p>` : ""}
+      <p style="margin-top:8px"><b>URL del webhook que debes pegar en Stripe:</b></p>
+      <div class="st-url">${h(ctx, webhookUrl)}</div>
+    </div>
+    <div class="st-row">
+      <label class="st-field full">
+        <span>URL pública (déjala vacía para autodetectar)</span>
+        <input type="text" name="public_base_url" value="${h(ctx, savedBase)}" placeholder="https://tu-dominio.com">
+      </label>
+    </div>
+    <div class="st-actions">
+      <button class="st-btn" type="submit" style="background:linear-gradient(135deg,#16a34a,#22c55e)"><i class="ri-save-3-line"></i> Guardar URL pública</button>
+    </div>
+  </form>
+
   <section class="st-card">
     <div class="st-help">
       <h3><i class="ri-information-line"></i> ¿Cómo funciona?</h3>
       <p>Cuando un usuario paga una factura con Stripe, lo redirigimos a la página segura de <b>Stripe Checkout</b>. Al confirmarse el pago, Stripe envía un evento al webhook que registra la factura como pagada y entrega el producto automáticamente.</p>
-      <p style="margin-top:8px"><b>URL del webhook que debes configurar en Stripe:</b></p>
-      <div class="st-url">${h(ctx, webhookUrl)}</div>
     </div>
   </section>
 

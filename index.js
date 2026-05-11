@@ -58,6 +58,23 @@ app.use((req, res, next) => {
   next();
 });
 
+// ===== Auto-detect public URL (saves to settings on first non-local hit) =====
+app.use((req, _res, next) => {
+  try {
+    const proto = String(req.headers["x-forwarded-proto"] || req.protocol || "http").split(",")[0].trim();
+    const host  = String(req.headers["x-forwarded-host"]  || req.headers.host || "").split(",")[0].trim();
+    if (host && !/localhost|127\.0\.0\.1/.test(host)) {
+      const current = db.getSetting("public_base_url", "");
+      const url = `${proto}://${host}`;
+      if (!current || /localhost|127\.0\.0\.1/.test(current)) {
+        db.setSetting("public_base_url", url);
+        if (current !== url) console.log("[boot] public_base_url ->", url);
+      }
+    }
+  } catch {}
+  next();
+});
+
 // ===== Helper: send verification email (link + 6-digit code) =====
 async function sendVerificationEmail(req, user) {
   const h = layout.escapeHtml;

@@ -68,6 +68,17 @@ function finalizeExternalPayment(db, invoiceId, { provider, providerRef = "", am
   return { ok: true, invoice: billing.fullInvoice(db, invoiceId) };
 }
 
+function publicBaseUrl(db, req) {
+  const saved = String(db.getSetting("public_base_url", "") || "").trim().replace(/\/+$/, "");
+  if (saved && !/localhost|127\.0\.0\.1/.test(saved)) return saved;
+  if (req) {
+    const proto = String(req.headers["x-forwarded-proto"] || req.protocol || "http").split(",")[0].trim();
+    const host  = String(req.headers["x-forwarded-host"]  || req.headers.host || "").split(",")[0].trim();
+    if (host) return `${proto}://${host}`;
+  }
+  return saved || "";
+}
+
 function productAcceptsProvider(product, provider) {
   if (!product) return false;
   if (provider === "credit") return product.accept_credit == null ? true : !!product.accept_credit;
@@ -136,4 +147,4 @@ function findOrCreatePendingInvoice(db, userId, productId) {
   return { ok: true, invoice: inv, product: p, reused: false };
 }
 
-module.exports = { finalizeExternalPayment, productAcceptsProvider, providerEnabledGlobally, providerLabel, providerBadgeClass, invoiceProduct, findOrCreatePendingInvoice };
+module.exports = { finalizeExternalPayment, productAcceptsProvider, providerEnabledGlobally, providerLabel, providerBadgeClass, invoiceProduct, findOrCreatePendingInvoice, publicBaseUrl };

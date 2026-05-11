@@ -28,7 +28,13 @@ function getStripe(db) {
   return stripeCache;
 }
 
-function absoluteBase(req) {
+function absoluteBase(req, db) {
+  try {
+    if (db) {
+      const saved = String(db.getSetting("public_base_url", "") || "").trim().replace(/\/+$/, "");
+      if (saved && !/localhost|127\.0\.0\.1/.test(saved)) return saved;
+    }
+  } catch {}
   const proto = (req.headers["x-forwarded-proto"] || req.protocol || "http").split(",")[0].trim();
   const host  = (req.headers["x-forwarded-host"] || req.headers.host || req.get("host") || "").split(",")[0].trim();
   return `${proto}://${host}`;
@@ -47,7 +53,7 @@ function notAvailableHtml(method) {
 async function startStripeCheckout(ctx, req, inv, p) {
   const cli = getStripe(ctx.db);
   if (!cli) throw new Error("Stripe no inicializado");
-  const base = absoluteBase(req);
+  const base = absoluteBase(req, ctx.db);
   const currency = String(inv.currency || "USD").toUpperCase();
   const curLower = currency.toLowerCase();
   const amount = Number(inv.total || 0);
@@ -121,7 +127,7 @@ function router(ctx) {
     }
 
     const u = req.session.user;
-    const base = absoluteBase(req);
+    const base = absoluteBase(req, ctx.db);
     const invoiceId = Number(req.query.invoice_id || 0);
     if (!invoiceId) return res.status(400).type("text/plain").send("Falta invoice_id");
 
