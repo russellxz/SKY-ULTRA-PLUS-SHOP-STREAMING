@@ -17,6 +17,8 @@ let reconnectTimer = null;
 let savedDb = null;
 let autoStartTried = false;
 let pairingTimer = null;
+let cachedGroups = []; // [{ jid, subject, size }]
+let lastGroupsFetchAt = null;
 
 function digits(s) { return String(s || "").replace(/\D/g, ""); }
 function isOnline() { return state === "connected" && !!sock; }
@@ -62,12 +64,19 @@ async function start(db, opts = {}) {
       default: makeWASocket,
       useMultiFileAuthState,
       makeCacheableSignalKeyStore,
+      fetchLatestWaWebVersion,
       fetchLatestBaileysVersion,
     } = baileys;
 
+    // Algunas versiones del fork exponen fetchLatestWaWebVersion en lugar de
+    // fetchLatestBaileysVersion. Usamos la que esté disponible.
+    const getWaVersion = typeof fetchLatestWaWebVersion === "function"
+      ? fetchLatestWaWebVersion
+      : fetchLatestBaileysVersion;
+
     const { state: authState, saveCreds } = await useMultiFileAuthState(SESSIONS_DIR);
     let version;
-    try { ({ version } = await fetchLatestBaileysVersion()); } catch (_) { version = undefined; }
+    try { ({ version } = await getWaVersion()); } catch (_) { version = undefined; }
 
     const logger = pino({ level: "silent" });
 
@@ -97,6 +106,9 @@ async function start(db, opts = {}) {
           db.setSetting("wa_pairing_code", "");
         } catch (_) {}
         console.log("[wa] conectado a WhatsApp");
+        // Carga la lista de grupos en segundo plano para que el admin pueda
+        // seleccionar a cuáles reenviar notificaciones.
+        setTimeout(() => { refreshGroups().catch(() => {}); }, 2000);
       } else if (connection === "close") {
         lastDisconnectedAt = new Date().toISOString();
         const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode;
@@ -209,6 +221,39 @@ function status() {
     lastDisconnectedAt,
     hasSession: fs.existsSync(path.join(SESSIONS_DIR, "creds.json")),
   };
+}
+
+async function refreshGroups() {
+  if (!isOnline()) return { ok: false, error: "WA no conectado." };
+  try {
+    const raw = await sock.groupFetchAllParticipating();
+    const list = Object.values(raw || {}).map((g) => ({
+      jid: g.id,
+      subject: g.subject || g.id,
+      size: Array.isArray(g.participants) ? g.participants.length : (g.size || 0),
+    }));
+    list.sort((a, b) => String(a.subject).localeCompare(String(b.subject)));
+    cachedGroups = list;
+    lastGroupsFetchAt = new Date().toISOString();
+    return { ok: true, groups: list };
+  } catch (e) {
+    return { ok: false, error: e.message || String(e) };
+  }
+}
+
+function getGroups() {
+  return { groups: cachedGroups, lastFetchAt: lastGroupsFetchAt };
+}
+
+async function sendMessageToJid(jid, text) {
+  if (!isOnline()) return { ok: false, error: "WhatsApp no está conectado." };
+  if (!jid || typeof jid !== "string") return { ok: false, error: "JID inválido." };
+  try {
+    await sock.sendMessage(jid, { text });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message || String(e) };
+  }
 }
 
 async function sendMessageToNumber(phone, text) {
@@ -336,10 +381,33 @@ async function notify(db, event, payload = {}) {
 
     // Admin
     const aphone = adminPhone(db);
+    const adminMsg = buildAdminMessage(siteName, event, payload, url);
     if (aphone) {
-      const adminMsg = buildAdminMessage(siteName, event, payload, url);
       await sendMessageToNumber(aphone, adminMsg).catch((e) => console.error("[wa] notify admin:", e.message));
     }
+
+    // Grupos (si el admin habilitó reenvío a uno o varios grupos)
+    if (db.getSetting("wa_notify_groups_enabled", "0") === "1") {
+      let groupJids = [];
+      try { groupJids = JSON.parse(db.getSetting("wa_notify_groups_jids", "[]") || "[]"); } catch (_) { groupJids = []; }
+      if (Array.isArray(groupJids) && groupJids.length) {
+        const mode = db.getSetting("wa_notify_groups_mode", "all");
+        let allowed = mode !== "specific";
+        if (mode === "specific" && payload.user) {
+          try {
+            const ids = JSON.parse(db.getSetting("wa_notify_groups_user_ids", "[]") || "[]");
+            allowed = Array.isArray(ids) && ids.map(Number).includes(Number(payload.user.id));
+          } catch (_) { allowed = false; }
+        }
+        if (allowed) {
+          for (const jid of groupJids) {
+            if (typeof jid !== "string" || !jid.endsWith("@g.us")) continue;
+            await sendMessageToJid(jid, adminMsg).catch((e) => console.error("[wa] notify group:", e.message));
+          }
+        }
+      }
+    }
+
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e.message };
@@ -398,6 +466,9 @@ module.exports = {
   notifyByInvoiceId,
   notifyByServiceId,
   sendMessageToNumber,
+  sendMessageToJid,
+  refreshGroups,
+  getGroups,
   autoStartIfEnabled,
   SESSIONS_DIR,
 };
