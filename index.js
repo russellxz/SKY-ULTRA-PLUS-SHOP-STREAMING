@@ -15,6 +15,7 @@ const { registerForm } = require("./core/registerPage");
 const layout = require("./core/layout");
 const billing = require("./core/billing");
 const { loadPlugins } = require("./core/pluginLoader");
+const wa = require("./core/wa");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -55,6 +56,25 @@ app.use((req, res, next) => {
   req.db = db;
   req.auth = auth;
   res.renderPage = (opts) => res.send(layout.render({ req, db, ...opts }));
+  next();
+});
+
+// Detecta automáticamente la URL pública para que el bot WA la incluya en las notificaciones
+let _waUrlCaptured = false;
+app.use((req, res, next) => {
+  if (!_waUrlCaptured) {
+    try {
+      const host = req.get("host");
+      if (host) {
+        const proto = req.protocol || "http";
+        const url = `${proto}://${host}`;
+        if (db.getSetting("wa_detected_site_url", "") !== url) {
+          db.setSetting("wa_detected_site_url", url);
+        }
+        _waUrlCaptured = true;
+      }
+    } catch (_) {}
+  }
   next();
 });
 
@@ -682,4 +702,8 @@ app.get("/", (req, res) => {
 
 app.use((req, res) => res.status(404).renderPage({ title: "404", area: req.session.user?.role === "admin" ? "admin" : "client", registry, content: "<div class='card'><h2>404</h2><p>Página no encontrada.</p></div>" }));
 
-app.listen(PORT, "0.0.0.0", () => console.log(`SKYULTRAPLUS-SHOP v2 online en puerto ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`SKYULTRAPLUS-SHOP v2 online en puerto ${PORT}`);
+  // Si el admin ya dejó el bot habilitado y tiene sesión guardada, intenta reconectar solo
+  wa.autoStartIfEnabled(db).catch((e) => console.error("[wa] autoStart:", e.message));
+});
