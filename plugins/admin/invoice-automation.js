@@ -100,10 +100,17 @@ function tickOnce(db) {
   for (const r of pendInvs) {
     db.sqlite.prepare("UPDATE invoices SET status='suspended', state_changed_at=? WHERE id=?").run(db.now(), r.id);
     const svc = findServiceByInvoiceId(db, r.id);
+    let serviceWasSuspended = false;
     if (svc && svc.status !== "canceled" && svc.status !== "suspended") {
       db.sqlite.prepare("UPDATE services SET status='suspended', state_changed_at=? WHERE id=?").run(db.now(), svc.id);
+      serviceWasSuspended = true;
     }
     stats.suspended++;
+    try {
+      const wa = require("../../core/wa");
+      wa.notifyByInvoiceId(db, "invoice_suspended", r.id);
+      if (serviceWasSuspended) wa.notifyByServiceId(db, "service_suspended", svc.id);
+    } catch (_) {}
   }
 
   // 2) suspended → canceled
@@ -113,11 +120,18 @@ function tickOnce(db) {
   for (const r of suspInvs) {
     db.sqlite.prepare("UPDATE invoices SET status='canceled', state_changed_at=? WHERE id=?").run(db.now(), r.id);
     const svc = findServiceByInvoiceId(db, r.id);
+    let serviceWasCanceled = false;
     if (svc && svc.status !== "canceled") {
       db.sqlite.prepare("UPDATE services SET status='canceled', canceled_at=?, state_changed_at=? WHERE id=?")
         .run(db.now(), db.now(), svc.id);
+      serviceWasCanceled = true;
     }
     stats.canceled++;
+    try {
+      const wa = require("../../core/wa");
+      wa.notifyByInvoiceId(db, "invoice_canceled", r.id);
+      if (serviceWasCanceled) wa.notifyByServiceId(db, "service_canceled", svc.id);
+    } catch (_) {}
   }
 
   // 3) canceled → deleted (service + all invoices linked to it)

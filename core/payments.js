@@ -1,6 +1,7 @@
 "use strict";
 
 const billing = require("./billing");
+function waNotify(db, event, payload){try{require("./wa").notify(db,event,payload).catch(()=>{})}catch(_){}}
 
 function takeStockInternal(db, userId, product, invoiceId) {
   let row = null;
@@ -67,7 +68,12 @@ function finalizeExternalPayment(db, invoiceId, { provider, providerRef = "", am
 
   try { tx(); }
   catch (e) { return { ok: false, error: stockError || e.message }; }
-  return { ok: true, invoice: billing.fullInvoice(db, invoiceId) };
+  const final = billing.fullInvoice(db, invoiceId);
+  try {
+    const user = db.getUserById(inv.user_id);
+    if (user) waNotify(db, "invoice_paid", { user, invoice: final, product });
+  } catch (_) {}
+  return { ok: true, invoice: final };
 }
 
 function productAcceptsProvider(product, provider) {

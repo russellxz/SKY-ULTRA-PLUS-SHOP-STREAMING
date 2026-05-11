@@ -1,1 +1,22 @@
-{"name":"skyultraplus-shop-v2","version":"0.1.0","main":"index.js","scripts":{"start":"node index.js"},"dependencies":{"bcryptjs":"^2.4.3","better-sqlite3":"^11.9.1","better-sqlite3-session-store":"^0.1.0","express":"^4.19.2","express-fileupload":"^1.5.1","express-session":"^1.18.1","helmet":"^8.0.0","nodemailer":"^8.0.7","pdfkit":"^0.16.0","stripe":"^17.7.0"}}
+{
+  "name": "skyultraplus-shop-v2",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "Kone457/baileys#main",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.9.1",
+    "better-sqlite3-session-store": "^0.1.0",
+    "express": "^4.19.2",
+    "express-fileupload": "^1.5.1",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "nodemailer": "^8.0.7",
+    "pdfkit": "^0.16.0",
+    "pino": "^8.14.1",
+    "stripe": "^17.7.0"
+  }
+}
