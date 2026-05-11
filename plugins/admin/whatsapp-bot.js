@@ -24,6 +24,10 @@ const DEF = {
   wa_notify_invoice_canceled: "1",
   wa_notify_service_suspended: "1",
   wa_notify_service_canceled: "1",
+  wa_notify_groups_enabled: "0",
+  wa_notify_groups_jids: "[]",
+  wa_notify_groups_mode: "all",
+  wa_notify_groups_user_ids: "[]",
 };
 
 function h(ctx, v) { return ctx.layout.escapeHtml(v == null ? "" : v); }
@@ -132,13 +136,41 @@ function router(ctx) {
   // Endpoint JSON para polling en vivo del estado
   r.get("/status.json", (req, res) => {
     const s = wa.status();
+    const grp = wa.getGroups();
     res.json({
       ...s,
       botPhone: g(ctx.db, "wa_bot_phone"),
       adminPhone: g(ctx.db, "wa_admin_phone"),
       enabled: g(ctx.db, "wa_bot_enabled") === "1",
       siteUrl: ctx.db.getSetting("wa_site_url", "") || ctx.db.getSetting("wa_detected_site_url", ""),
+      groupsCount: (grp.groups || []).length,
+      groupsLastFetchAt: grp.lastFetchAt || null,
     });
+  });
+
+  // Refrescar la lista de grupos manualmente
+  r.post("/refresh-groups", async (req, res) => {
+    const out = await wa.refreshGroups();
+    if (!out.ok) return res.redirect("/admin/whatsapp-bot?error=" + encodeURIComponent(out.error));
+    res.redirect("/admin/whatsapp-bot?groups_refreshed=" + (out.groups ? out.groups.length : 0));
+  });
+
+  // Guardar configuración de grupos
+  r.post("/save-groups", (req, res) => {
+    ctx.db.setSetting("wa_notify_groups_enabled", req.body.wa_notify_groups_enabled === "1" ? "1" : "0");
+    const mode = String(req.body.wa_notify_groups_mode || "all") === "specific" ? "specific" : "all";
+    ctx.db.setSetting("wa_notify_groups_mode", mode);
+    let jids = req.body.wa_notify_groups_jids;
+    if (typeof jids === "string") jids = [jids];
+    if (!Array.isArray(jids)) jids = [];
+    jids = jids.filter((j) => typeof j === "string" && j.endsWith("@g.us"));
+    ctx.db.setSetting("wa_notify_groups_jids", JSON.stringify(jids));
+    let ids = req.body.wa_notify_groups_user_ids;
+    if (typeof ids === "string") ids = [ids];
+    if (!Array.isArray(ids)) ids = [];
+    ids = ids.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0);
+    ctx.db.setSetting("wa_notify_groups_user_ids", JSON.stringify(ids));
+    res.redirect("/admin/whatsapp-bot?groups_saved=1");
   });
 
   // Página principal
@@ -150,13 +182,29 @@ function router(ctx) {
     const siteUrlManual = g(ctx.db, "wa_site_url");
     const siteUrlDetected = ctx.db.getSetting("wa_detected_site_url", "");
 
+    // Datos para la sección de grupos
+    const grp = wa.getGroups();
+    const groupsList = grp.groups || [];
+    const groupsEnabled = g(ctx.db, "wa_notify_groups_enabled") === "1";
+    const groupsMode = g(ctx.db, "wa_notify_groups_mode") || "all";
+    let selectedGroupJids = [];
+    try { selectedGroupJids = JSON.parse(g(ctx.db, "wa_notify_groups_jids") || "[]"); } catch (_) {}
+    let selectedUserIds = [];
+    try { selectedUserIds = JSON.parse(g(ctx.db, "wa_notify_groups_user_ids") || "[]"); } catch (_) {}
+    const selectedJidsSet = new Set(selectedGroupJids);
+    const selectedUserSet = new Set(selectedUserIds.map(Number));
+    let allUsers = [];
+    try { allUsers = ctx.db.sqlite.prepare("SELECT id, first_name, last_name, email, username FROM users WHERE role='user' ORDER BY first_name, last_name, email LIMIT 500").all(); } catch (_) {}
+
     let msg = "";
-    if (req.query.saved)         msg = `<div class="appr-notice success"><i class="ri-checkbox-circle-line"></i> Configuración guardada.</div>`;
-    if (req.query.pairing)       msg = `<div class="appr-notice success"><i class="ri-key-2-line"></i> Solicitando código de emparejamiento. En unos segundos aparecerá abajo.</div>`;
-    if (req.query.disconnected)  msg = `<div class="appr-notice success"><i class="ri-link-unlink"></i> Bot desconectado.</div>`;
-    if (req.query.reset)         msg = `<div class="appr-notice success"><i class="ri-refresh-line"></i> Carpeta de sesión eliminada. Ya puedes vincular un nuevo número.</div>`;
-    if (req.query.tested)        msg = `<div class="appr-notice success"><i class="ri-send-plane-line"></i> Mensaje de prueba enviado al admin.</div>`;
-    if (req.query.error)         msg = `<div class="appr-notice" style="background:rgba(239,68,68,.14);color:#fca5a5;border:1px solid rgba(239,68,68,.32)"><i class="ri-error-warning-line"></i> ${h(ctx, req.query.error)}</div>`;
+    if (req.query.saved)             msg = `<div class="appr-notice success"><i class="ri-checkbox-circle-line"></i> Configuración guardada.</div>`;
+    if (req.query.pairing)           msg = `<div class="appr-notice success"><i class="ri-key-2-line"></i> Solicitando código de emparejamiento. En unos segundos aparecerá abajo.</div>`;
+    if (req.query.disconnected)      msg = `<div class="appr-notice success"><i class="ri-link-unlink"></i> Bot desconectado.</div>`;
+    if (req.query.reset)             msg = `<div class="appr-notice success"><i class="ri-refresh-line"></i> Carpeta de sesión eliminada. Ya puedes vincular un nuevo número.</div>`;
+    if (req.query.tested)            msg = `<div class="appr-notice success"><i class="ri-send-plane-line"></i> Mensaje de prueba enviado al admin.</div>`;
+    if (req.query.groups_refreshed)  msg = `<div class="appr-notice success"><i class="ri-refresh-line"></i> Grupos actualizados (${h(ctx, req.query.groups_refreshed)} encontrados).</div>`;
+    if (req.query.groups_saved)      msg = `<div class="appr-notice success"><i class="ri-checkbox-circle-line"></i> Configuración de grupos guardada.</div>`;
+    if (req.query.error)             msg = `<div class="appr-notice" style="background:rgba(239,68,68,.14);color:#fca5a5;border:1px solid rgba(239,68,68,.32)"><i class="ri-error-warning-line"></i> ${h(ctx, req.query.error)}</div>`;
 
     const lastErr = s.lastError ? `<div class="appr-notice" style="background:rgba(239,68,68,.14);color:#fca5a5;border:1px solid rgba(239,68,68,.32)"><i class="ri-error-warning-line"></i> ${h(ctx, s.lastError)}</div>` : "";
 
@@ -288,6 +336,73 @@ function router(ctx) {
       ${toggleRow("wa_notify_service_canceled",  "Servicio cancelado",  "Cuando el servicio queda cancelado (por automatización o manual).", "ri-close-circle-line", g(ctx.db, "wa_notify_service_canceled") === "1")}
     </div>
   </form>
+
+  <form class="appr-card" method="POST" action="/admin/whatsapp-bot/save-groups">
+    <div class="appr-card-head">
+      <div>
+        <h2><i class="ri-group-line"></i> Notificaciones a grupos</h2>
+        <p>Reenvía las notificaciones (con datos completos del cliente) a uno o varios grupos de WhatsApp donde esté el bot.</p>
+      </div>
+      <button class="appr-save-btn"><i class="ri-save-line"></i> Guardar</button>
+    </div>
+    <div class="appr-card-body">
+      ${toggleRow("wa_notify_groups_enabled", "Activar reenvío a grupos", "Cuando esté apagado, las notificaciones sólo van al cliente y al admin.", "ri-broadcast-line", groupsEnabled)}
+
+      <div class="wa-groups-toolbar" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:8px 0 14px">
+        <div style="font-size:13px;color:rgba(233,242,255,.72)">
+          ${groupsList.length
+            ? `${groupsList.length} grupo${groupsList.length === 1 ? "" : "s"} disponible${groupsList.length === 1 ? "" : "s"}${grp.lastFetchAt ? ` · Actualizado ${h(ctx, new Date(grp.lastFetchAt).toLocaleString())}` : ""}`
+            : (s.state === "connected" ? "Aún no se han cargado los grupos. Pulsa Refrescar." : "Conecta el bot primero para ver los grupos.")}
+        </div>
+        <button type="button" class="appr-save-btn" style="background:rgba(124,58,237,.2);color:inherit;font-weight:800;padding:6px 12px;border-radius:10px;border:1px solid rgba(124,58,237,.4);cursor:pointer" onclick="document.getElementById('waRefreshGroupsForm').submit()"><i class="ri-refresh-line"></i> Refrescar grupos</button>
+      </div>
+
+      <div class="wa-groups-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-bottom:14px">
+        ${groupsList.length
+          ? groupsList.map((g2) => {
+              const checked = selectedJidsSet.has(g2.jid) ? "checked" : "";
+              return `<label class="wa-group-item" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.18);cursor:pointer">
+                <input type="checkbox" name="wa_notify_groups_jids" value="${h(ctx, g2.jid)}" ${checked} style="width:auto;margin:0">
+                <span style="flex:1;min-width:0">
+                  <b style="display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h(ctx, g2.subject)}</b>
+                  <small style="display:block;color:rgba(233,242,255,.6);font-size:11px">${g2.size || 0} miembros</small>
+                </span>
+              </label>`;
+            }).join("")
+          : `<div style="grid-column:1/-1;padding:18px;border-radius:12px;background:rgba(148,163,184,.08);border:1px dashed rgba(148,163,184,.32);color:rgba(233,242,255,.6);text-align:center;font-size:13px">No hay grupos cargados.</div>`}
+      </div>
+
+      <div class="appr-row" style="background:rgba(124,58,237,.08);border-radius:14px;padding:14px;margin-bottom:10px">
+        <span class="appr-row-icon"><i class="ri-filter-3-line"></i></span>
+        <div class="appr-row-text"><b>¿Qué clientes reenviar?</b><small>Elige si se notifica al grupo cada evento de todos los clientes o sólo de algunos.</small></div>
+        <div class="appr-row-control">
+          <span class="appr-select"><select name="wa_notify_groups_mode" onchange="document.getElementById('waSpecificUsers').style.display=this.value==='specific'?'block':'none'">
+            <option value="all" ${groupsMode === "all" ? "selected" : ""}>Todos los clientes</option>
+            <option value="specific" ${groupsMode === "specific" ? "selected" : ""}>Sólo clientes específicos</option>
+          </select></span>
+        </div>
+      </div>
+
+      <div id="waSpecificUsers" style="display:${groupsMode === "specific" ? "block" : "none"}">
+        <div style="margin-bottom:8px;color:rgba(233,242,255,.7);font-size:13px"><i class="ri-user-line"></i> Selecciona los clientes cuyos eventos se reenviarán a los grupos seleccionados:</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;max-height:280px;overflow:auto;padding:10px;border-radius:12px;background:rgba(15,23,42,.4);border:1px solid rgba(139,92,246,.18)">
+          ${allUsers.length
+            ? allUsers.map((u) => {
+                const name = `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.username || u.email;
+                const checked = selectedUserSet.has(Number(u.id)) ? "checked" : "";
+                return `<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;cursor:pointer;font-size:13px" onmouseover="this.style.background='rgba(124,58,237,.12)'" onmouseout="this.style.background='transparent'">
+                  <input type="checkbox" name="wa_notify_groups_user_ids" value="${u.id}" ${checked} style="width:auto;margin:0">
+                  <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                    <b>${h(ctx, name)}</b><small style="display:block;color:rgba(233,242,255,.5);font-size:11px">${h(ctx, u.email || "")}</small>
+                  </span>
+                </label>`;
+              }).join("")
+            : `<div style="grid-column:1/-1;color:rgba(233,242,255,.5);text-align:center;padding:18px;font-size:13px">No hay usuarios registrados todavía.</div>`}
+        </div>
+      </div>
+    </div>
+  </form>
+  <form id="waRefreshGroupsForm" method="POST" action="/admin/whatsapp-bot/refresh-groups" style="display:none"></form>
 
   <section class="appr-card">
     <div class="appr-card-head">
