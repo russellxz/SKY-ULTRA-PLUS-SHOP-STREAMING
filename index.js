@@ -483,8 +483,9 @@ setInterval(() => {
 
 app.get("/", (req, res) => {
   const user = req.session.user;
-  const dbu = db.getUserById(user.id) || user;
-  const fullName = `${dbu.first_name||dbu.username||""} ${dbu.last_name||""}`.trim() || dbu.email || "amigo";
+  const isGuest = !user;
+  const dbu = user ? (db.getUserById(user.id) || user) : null;
+  const fullName = dbu ? (`${dbu.first_name||dbu.username||""} ${dbu.last_name||""}`.trim() || dbu.email || "amigo") : "";
   const siteName = db.getSetting("site_name", "SKY ULTRA PLUS shop");
   const siteLogo = db.getSetting("site_logo", "");
   const h = (v)=>layout.escapeHtml(v||"");
@@ -507,33 +508,31 @@ app.get("/", (req, res) => {
     return {...c, product_count: count};
   }).filter(c=>c.product_count>0);
 
-  // Stats personales
+  // Stats personales (sólo si hay sesión)
   let svcActive=0,invPending=0,walletUSD=0,walletMXN=0,tkOpen=0;
-  try{ svcActive = db.sqlite.prepare("SELECT COUNT(*) c FROM services WHERE user_id=? AND status='active'").get(user.id).c; }catch{}
-  try{ invPending = db.sqlite.prepare("SELECT COUNT(*) c FROM invoices WHERE user_id=? AND status='pending'").get(user.id).c; }catch{}
-  try{ const w = db.getWallet(user.id, "USD"); walletUSD = Number(w.balance||0); }catch{}
-  try{ const w = db.getWallet(user.id, "MXN"); walletMXN = Number(w.balance||0); }catch{}
-  try{ tkOpen = db.sqlite.prepare("SELECT COUNT(*) c FROM tickets WHERE user_id=? AND status IN ('open','pending')").get(user.id).c; }catch{}
-
-  // Servicios recientes
   let recentServices = [];
-  try{
-    recentServices = db.sqlite.prepare(`
-      SELECT s.id, s.status, s.next_invoice_at, p.name product_name, p.image_path, p.price, p.currency
-      FROM services s JOIN products p ON p.id=s.product_id
-      WHERE s.user_id=? ORDER BY s.id DESC LIMIT 5
-    `).all(user.id);
-  }catch{}
-
-  // Facturas recientes
   let recentInvoices = [];
-  try{
-    recentInvoices = db.sqlite.prepare(`
-      SELECT i.id, i.number, i.status, i.total, i.currency, i.created_at,
-        (SELECT it.name FROM invoice_items it WHERE it.invoice_id=i.id LIMIT 1) item_name
-      FROM invoices i WHERE i.user_id=? ORDER BY i.id DESC LIMIT 5
-    `).all(user.id);
-  }catch{}
+  if (user) {
+    try{ svcActive = db.sqlite.prepare("SELECT COUNT(*) c FROM services WHERE user_id=? AND status='active'").get(user.id).c; }catch{}
+    try{ invPending = db.sqlite.prepare("SELECT COUNT(*) c FROM invoices WHERE user_id=? AND status='pending'").get(user.id).c; }catch{}
+    try{ const w = db.getWallet(user.id, "USD"); walletUSD = Number(w.balance||0); }catch{}
+    try{ const w = db.getWallet(user.id, "MXN"); walletMXN = Number(w.balance||0); }catch{}
+    try{ tkOpen = db.sqlite.prepare("SELECT COUNT(*) c FROM tickets WHERE user_id=? AND status IN ('open','pending')").get(user.id).c; }catch{}
+    try{
+      recentServices = db.sqlite.prepare(`
+        SELECT s.id, s.status, s.next_invoice_at, p.name product_name, p.image_path, p.price, p.currency
+        FROM services s JOIN products p ON p.id=s.product_id
+        WHERE s.user_id=? ORDER BY s.id DESC LIMIT 5
+      `).all(user.id);
+    }catch{}
+    try{
+      recentInvoices = db.sqlite.prepare(`
+        SELECT i.id, i.number, i.status, i.total, i.currency, i.created_at,
+          (SELECT it.name FROM invoice_items it WHERE it.invoice_id=i.id LIMIT 1) item_name
+        FROM invoices i WHERE i.user_id=? ORDER BY i.id DESC LIMIT 5
+      `).all(user.id);
+    }catch{}
+  }
 
   const fmtMoney = (n)=>Number(n||0).toLocaleString("es",{minimumFractionDigits:2,maximumFractionDigits:2});
   const svcStatus = (s)=>({active:'ok',pending:'pending',suspended:'err',canceled:'err'})[s]||'muted';
@@ -554,8 +553,8 @@ app.get("/", (req, res) => {
   const greetHour = new Date().getHours();
   const greet = greetHour < 12 ? "Buenos días" : greetHour < 19 ? "Buenas tardes" : "Buenas noches";
 
-  const isVerified = !!dbu.email_verified;
-  const verifyBanner = !isVerified ? `
+  const isVerified = user ? !!dbu.email_verified : true;
+  const verifyBanner = user && !isVerified ? `
   <section class="cd-verify-banner">
     <div class="cd-verify-icon"><i class="ri-mail-lock-line"></i></div>
     <div class="cd-verify-text">
@@ -568,13 +567,19 @@ app.get("/", (req, res) => {
     </div>
   </section>` : "";
 
-  const welcomeNotice = req.query.welcome === "1" ? `
+  const welcomeNotice = user && req.query.welcome === "1" ? `
   <section class="cd-welcome-notice">
     <i class="ri-checkbox-circle-line"></i>
     <span>¡Bienvenido! Tu cuenta fue creada exitosamente.${!isVerified?" Revisa tu correo para verificar.":""}</span>
   </section>` : "";
 
   // Marketing card (admin customizable)
+  const greetingTag = user
+    ? `<span class="cd-marketing-tag"><i class="ri-sparkling-2-line"></i> ${h(greet)}, ${h(fullName.split(" ")[0])}</span>`
+    : `<span class="cd-marketing-tag"><i class="ri-sparkling-2-line"></i> Bienvenido a ${h(siteName)}</span>`;
+  const guestCta = isGuest
+    ? `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><a href="${h(mkCtaLink)}" class="cd-marketing-cta"><i class="ri-store-2-line"></i> ${h(mkCtaLabel)}</a><a href="/register" class="cd-marketing-cta" style="background:rgba(255,255,255,.12);box-shadow:none"><i class="ri-user-add-line"></i> Crear cuenta</a></div>`
+    : `<a href="${h(mkCtaLink)}" class="cd-marketing-cta">${h(mkCtaLabel)} <i class="ri-arrow-right-line"></i></a>`;
   const marketingCard = `
   <section class="cd-marketing">
     <div class="cd-marketing-image" ${mkImage?`style="background-image:url('${h(mkImage)}')"`:''}>
@@ -582,10 +587,10 @@ app.get("/", (req, res) => {
       <div class="cd-marketing-overlay"></div>
     </div>
     <div class="cd-marketing-content">
-      <span class="cd-marketing-tag"><i class="ri-sparkling-2-line"></i> ${h(greet)}, ${h(fullName.split(" ")[0])}</span>
+      ${greetingTag}
       <h2>${h(mkTitle)}</h2>
       <p>${h(mkSubtitle)}</p>
-      <a href="${h(mkCtaLink)}" class="cd-marketing-cta">${h(mkCtaLabel)} <i class="ri-arrow-right-line"></i></a>
+      ${guestCta}
     </div>
   </section>`;
 
@@ -619,28 +624,16 @@ app.get("/", (req, res) => {
     </div>
   </section>` : '';
 
-  res.renderPage({
-    title: "Inicio",
-    area: "client",
-    registry,
-    content: `
-<link rel="stylesheet" href="/public/css/client-dashboard.css?v=5">
-<div class="cd-dash">
-  ${welcomeNotice}
-  ${verifyBanner}
-
-  ${marketingCard}
-
+  const statsSection = user ? `
   <section class="cd-stats">
     <div class="cd-stat svc"><div class="cd-stat-icon"><i class="ri-stack-line"></i></div><div class="cd-stat-value">${svcActive}</div><div class="cd-stat-label">Servicios activos</div></div>
     <div class="cd-stat inv"><div class="cd-stat-icon"><i class="ri-file-list-3-line"></i></div><div class="cd-stat-value">${invPending}</div><div class="cd-stat-label">Facturas pendientes</div></div>
     <div class="cd-stat cred"><div class="cd-stat-icon"><i class="ri-wallet-3-line"></i></div><div class="cd-stat-value">$${fmtMoney(walletUSD)}</div><div class="cd-stat-label">Crédito USD</div></div>
     <div class="cd-stat cred mxn"><div class="cd-stat-icon"><i class="ri-wallet-3-line"></i></div><div class="cd-stat-value">$${fmtMoney(walletMXN)}</div><div class="cd-stat-label">Crédito MXN</div></div>
     <div class="cd-stat tk"><div class="cd-stat-icon"><i class="ri-customer-service-2-line"></i></div><div class="cd-stat-value">${tkOpen}</div><div class="cd-stat-label">Tickets abiertos</div></div>
-  </section>
+  </section>` : "";
 
-  ${categoriesSection}
-
+  const recentRows = user ? `
   <div class="cd-row">
     <section class="cd-block">
       <header class="cd-block-head">
@@ -656,7 +649,33 @@ app.get("/", (req, res) => {
       </header>
       <div class="cd-list">${invRows}</div>
     </section>
-  </div>
+  </div>` : "";
+
+  const guestCallout = isGuest ? `
+  <section class="cd-block" style="text-align:center;padding:28px 24px">
+    <h3 style="margin:0 0 6px;font-size:20px"><i class="ri-shopping-cart-2-line"></i> ¿Listo para comprar?</h3>
+    <p style="margin:0 0 16px;color:rgba(233,242,255,.72)">Crea una cuenta gratis y empieza a usar nuestros productos digitales al instante. Si ya tienes cuenta, inicia sesión.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <a href="/register" class="cd-marketing-cta"><i class="ri-user-add-line"></i> Crear cuenta gratis</a>
+      <a href="/login" class="cd-marketing-cta" style="background:rgba(255,255,255,.12);box-shadow:none"><i class="ri-login-circle-line"></i> Iniciar sesión</a>
+    </div>
+  </section>` : "";
+
+  res.renderPage({
+    title: "Inicio",
+    area: "client",
+    registry,
+    content: `
+<link rel="stylesheet" href="/public/css/client-dashboard.css?v=5">
+<div class="cd-dash">
+  ${welcomeNotice}
+  ${verifyBanner}
+
+  ${marketingCard}
+  ${statsSection}
+  ${categoriesSection}
+  ${recentRows}
+  ${guestCallout}
 </div>`
   });
 });
