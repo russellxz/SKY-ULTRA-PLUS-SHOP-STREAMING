@@ -1,7 +1,6 @@
 "use strict";
 
 const express = require("express");
-const payments = require("../../core/payments");
 
 const config = {
   key: "admin_paypal",
@@ -26,13 +25,10 @@ function page(ctx, req, res) {
   const ipnEnabled = g("paypal_ipn_enabled", "0") === "1";
   const ipnEmail   = g("paypal_ipn_email", "");
 
-  const savedBase = String(ctx.db.getSetting("public_base_url", "") || "").trim().replace(/\/+$/, "");
-  const detected  = payments.publicBaseUrl(ctx.db, req);
-  const baseUrl   = savedBase || detected;
-  const ipnUrl    = `${baseUrl}/pay/paypal/ipn`;
+  const baseUrl = (req.headers["x-forwarded-proto"] ? req.headers["x-forwarded-proto"].split(",")[0] : req.protocol) + "://" + (req.headers["x-forwarded-host"] || req.get("host"));
+  const ipnUrl  = `${baseUrl}/pay/paypal/ipn`;
   const returnUrl = `${baseUrl}/pay/paypal/return`;
   const cancelUrl = `${baseUrl}/pay/paypal/cancel`;
-  const isLocal   = /localhost|127\.0\.0\.1/.test(baseUrl);
 
   const ok  = req.query.saved ? `<div class="notice success" style="margin:0 0 14px"><i class="ri-check-line"></i> Configuración guardada.</div>` : "";
   const err = req.query.error ? `<div class="notice error" style="margin:0 0 14px"><i class="ri-error-warning-line"></i> ${h(ctx, req.query.error)}</div>` : "";
@@ -78,41 +74,6 @@ ${ok}${err}
 
 <div class="pp-wrap">
 
-  <form class="pp-card" method="POST" action="/admin/paypal/save-base-url">
-    <div class="pp-head">
-      <div class="pp-head-icon" style="background:linear-gradient(135deg,#16a34a,#22c55e)"><i class="ri-link"></i></div>
-      <div><h2>URL pública de tu tienda</h2><p>PayPal usa esta URL para enviarte notificaciones de pagos (IPN) y para los Return/Cancel del checkout.</p></div>
-    </div>
-    <div class="pp-help" style="margin-top:6px">
-      <p>Tu URL pública actual es:</p>
-      <div class="pp-url" style="font-size:14px;font-weight:700;color:#7dd3fc">${h(ctx, baseUrl || "(no detectada)")}</div>
-      ${isLocal ? `<p style="color:#f59e0b;margin-top:8px"><i class="ri-error-warning-line"></i> Esta URL es local. PayPal NO podrá conectarse a ella. Configura una URL pública (con HTTPS) abajo, o asegúrate de visitar tu sitio por su dominio real al menos una vez para que se autodetecte.</p>` : ""}
-      <p style="margin-top:8px"><b>URLs que debes pegar en PayPal:</b></p>
-      <div style="display:grid;gap:6px;margin:8px 0">
-        <div><b>IPN Notification URL:</b><div class="pp-url">${h(ctx, ipnUrl)}</div></div>
-        <div><b>Return URL (API):</b><div class="pp-url">${h(ctx, returnUrl)}</div></div>
-        <div><b>Cancel URL (API):</b><div class="pp-url">${h(ctx, cancelUrl)}</div></div>
-      </div>
-    </div>
-    <div class="pp-row">
-      <label class="pp-field full">
-        <span>URL pública (auto-detectada — déjala vacía para autodetectar en el primer request)</span>
-        <input type="text" name="public_base_url" value="${h(ctx, savedBase)}" placeholder="https://tu-dominio.com">
-      </label>
-    </div>
-    <div class="pp-help" style="margin-top:6px;background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.35)">
-      <h3 style="color:#86efac"><i class="ri-lightbulb-line"></i> ¿Cómo se detecta la URL?</h3>
-      <ol>
-        <li>Cuando visitas tu sitio por su dominio real (por ejemplo, <code>https://russellxzshop.ultraplus.click</code>), el sistema lo detecta de los headers HTTP y lo guarda automáticamente.</li>
-        <li>Si la detección no funciona (acceso por IP, sin dominio, etc.), puedes pegar la URL manualmente en el campo de arriba.</li>
-        <li>La URL guardada aquí se usa al construir los enlaces de pago de PayPal y Stripe.</li>
-      </ol>
-    </div>
-    <div class="pp-actions">
-      <button class="pp-btn" type="submit" style="background:linear-gradient(135deg,#16a34a,#22c55e)"><i class="ri-save-3-line"></i> Guardar URL pública</button>
-    </div>
-  </form>
-
   <section class="pp-card">
     <div class="pp-help">
       <h3><i class="ri-information-line"></i> ¿Cómo funciona?</h3>
@@ -121,6 +82,12 @@ ${ok}${err}
         <li><b>API (REST)</b>: Captura los pagos automáticamente. Necesitas <code>Client ID</code> y <code>Secret</code> desde tu cuenta de desarrollador PayPal.</li>
         <li><b>IPN clásico</b>: Solo necesita tu correo de PayPal. PayPal te notifica cuando paga el cliente.</li>
       </ul>
+      <p style="margin-top:10px"><b>URLs que debes configurar en PayPal:</b></p>
+      <div style="display:grid;gap:6px;margin:8px 0">
+        <div><b>IPN Notification URL:</b><div class="pp-url">${h(ctx, ipnUrl)}</div></div>
+        <div><b>Return URL (API):</b><div class="pp-url">${h(ctx, returnUrl)}</div></div>
+        <div><b>Cancel URL (API):</b><div class="pp-url">${h(ctx, cancelUrl)}</div></div>
+      </div>
     </div>
   </section>
 
@@ -210,13 +177,6 @@ ${ok}${err}
 function router(ctx) {
   const r = express.Router();
   r.use(ctx.auth.requireAdmin);
-
-  r.post("/save-base-url", (req, res) => {
-    const raw = String(req.body.public_base_url || "").trim().replace(/\/+$/, "");
-    if (raw && !/^https?:\/\//i.test(raw)) return res.redirect("/admin/paypal?error=" + encodeURIComponent("La URL debe empezar con http:// o https://"));
-    ctx.db.setSetting("public_base_url", raw);
-    res.redirect("/admin/paypal?saved=1");
-  });
 
   r.post("/save-api", (req, res) => {
     ctx.db.setSetting("paypal_api_enabled", req.body.paypal_api_enabled ? "1" : "0");

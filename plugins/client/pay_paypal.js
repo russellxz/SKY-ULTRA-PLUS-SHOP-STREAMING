@@ -21,15 +21,7 @@ function isLive(ctx) { return get(ctx, "paypal_api_mode", "sandbox") === "live";
 function apiRoot(ctx) {
   return isLive(ctx) ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com";
 }
-function baseUrl(req, db) {
-  // 1) saved override
-  try {
-    if (db) {
-      const saved = String(db.getSetting("public_base_url", "") || "").trim().replace(/\/+$/, "");
-      if (saved && !/localhost|127\.0\.0\.1/.test(saved)) return saved;
-    }
-  } catch {}
-  // 2) request-derived
+function baseUrl(req) {
   const proto = (req.headers["x-forwarded-proto"] || "").split(",")[0] || (req.secure ? "https" : "http") || req.protocol;
   const host  = req.headers["x-forwarded-host"] || req.headers.host || req.get("host");
   return `${proto}://${host}`;
@@ -64,8 +56,6 @@ function invoiceProduct(ctx, invoice) {
   return item ? ctx.db.sqlite.prepare("SELECT * FROM products WHERE id=?").get(item.reference_id) : null;
 }
 
-function ctxBase(ctx, req) { return baseUrl(req, ctx.db); }
-
 async function startPaypalApiCheckout(ctx, req, inv, p) {
   const access = await getAccessToken(ctx);
   const site = get(ctx, "site_name", "SkyShop");
@@ -81,8 +71,8 @@ async function startPaypalApiCheckout(ctx, req, inv, p) {
     application_context: {
       brand_name: String(site).slice(0, 127),
       user_action: "PAY_NOW",
-      return_url: ctxBase(ctx, req) + `/pay/paypal/return?invoice_id=${inv.id}`,
-      cancel_url: ctxBase(ctx, req) + `/pay/paypal/cancel?invoice_id=${inv.id}`,
+      return_url: baseUrl(req) + `/pay/paypal/return?invoice_id=${inv.id}`,
+      cancel_url: baseUrl(req) + `/pay/paypal/cancel?invoice_id=${inv.id}`,
     },
   };
   const rsp = await fetch(apiRoot(ctx) + "/v2/checkout/orders", {
@@ -102,9 +92,9 @@ function buildIpnForm(ctx, req, inv, p) {
   const webscr = isLive(ctx)
     ? "https://www.paypal.com/cgi-bin/webscr"
     : "https://www.sandbox.paypal.com/cgi-bin/webscr";
-  const retOk     = ctxBase(ctx, req) + `/pay/paypal/ok?invoice_id=${inv.id}`;
-  const retCancel = ctxBase(ctx, req) + `/pay/paypal/cancel_ipn?invoice_id=${inv.id}`;
-  const notify    = ctxBase(ctx, req) + `/pay/paypal/ipn`;
+  const retOk     = baseUrl(req) + `/pay/paypal/ok?invoice_id=${inv.id}`;
+  const retCancel = baseUrl(req) + `/pay/paypal/cancel_ipn?invoice_id=${inv.id}`;
+  const notify    = baseUrl(req) + `/pay/paypal/ipn`;
   const itemName  = (p && p.name) || ("Factura " + (inv.number || inv.id));
 
   return `<!doctype html>
