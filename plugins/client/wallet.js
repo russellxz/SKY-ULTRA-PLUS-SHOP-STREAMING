@@ -13,6 +13,8 @@ function txTypeInfo(t){
     credit_topup:["Recarga de crédito","ri-add-circle-line","in"],
     refund:["Reembolso","ri-refund-2-line","in"],
     adjustment:["Ajuste","ri-equalizer-line","mid"],
+    admin_set_balance:["Ajuste de admin","ri-shield-keyhole-line","mid"],
+    admin_adjustment:["Ajuste de admin","ri-shield-keyhole-line","mid"],
     bonus:["Bonificación","ri-gift-line","in"]
   };
   return map[t]||[String(t||"Movimiento"),"ri-exchange-line","mid"];
@@ -25,9 +27,24 @@ function router(ctx) {
     const uid=req.session.user.id;
     const wUSD=ctx.db.getWallet(uid,"USD");
     const wMXN=ctx.db.getWallet(uid,"MXN");
-    const txs=ctx.db.sqlite.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 30").all(uid);
 
-    // Stats per currency
+    // Movimientos: JOIN con wallets para obtener currency, LEFT JOIN con invoices/items/products para info del producto
+    const txs=ctx.db.sqlite.prepare(`
+      SELECT
+        wt.*,
+        w.currency,
+        i.number AS invoice_number,
+        (SELECT it.name FROM invoice_items it WHERE it.invoice_id=wt.invoice_id LIMIT 1) AS product_name,
+        (SELECT p.image_path FROM invoice_items it LEFT JOIN products p ON p.id=it.reference_id WHERE it.invoice_id=wt.invoice_id LIMIT 1) AS product_image
+      FROM wallet_transactions wt
+      JOIN wallets w ON w.id=wt.wallet_id
+      LEFT JOIN invoices i ON i.id=wt.invoice_id
+      WHERE wt.user_id=?
+      ORDER BY wt.id DESC
+      LIMIT 50
+    `).all(uid);
+
+    // Stats por moneda
     const totalIn=(cur)=>txs.filter(t=>t.currency===cur&&Number(t.amount)>0).reduce((s,t)=>s+Number(t.amount),0);
     const totalOut=(cur)=>txs.filter(t=>t.currency===cur&&Number(t.amount)<0).reduce((s,t)=>s+Math.abs(Number(t.amount)),0);
 
@@ -36,9 +53,33 @@ function router(ctx) {
       const amt=Number(t.amount);
       const sign=amt>=0?'+':'';
       const cls=amt>=0?'in':'out';
+
+      // Concepto: si es pago de factura y hay producto, mostrar producto + factura
+      let conceptHtml;
+      if (t.type==='invoice_payment' && t.product_name) {
+        const thumb = t.product_image
+          ? `<img src="${h(ctx,t.product_image)}" alt="">`
+          : `<div class="wlt-tx-thumb-fb"><i class="ri-archive-2-line"></i></div>`;
+        conceptHtml = `<div class="wlt-tx">
+          <div class="wlt-tx-thumb">${thumb}</div>
+          <div class="wlt-tx-text">
+            <b>${h(ctx,t.product_name)}</b>
+            <small><i class="ri-file-list-3-line"></i> ${h(ctx,t.invoice_number||'Factura')}</small>
+          </div>
+        </div>`;
+      } else {
+        conceptHtml = `<div class="wlt-tx">
+          <div class="wlt-tx-ico ${info[2]}"><i class="${info[1]}"></i></div>
+          <div class="wlt-tx-text">
+            <b>${h(ctx,info[0])}</b>
+            <small>${t.note?h(ctx,t.note):h(ctx,t.type)}</small>
+          </div>
+        </div>`;
+      }
+
       return `<tr class="wlt-row ${cls}">
-        <td><div class="wlt-tx"><div class="wlt-tx-ico ${info[2]}"><i class="${info[1]}"></i></div><div class="wlt-tx-text"><b>${h(ctx,info[0])}</b><small>${t.note?h(ctx,t.note):h(ctx,t.type)}</small></div></div></td>
-        <td class="wlt-cur">${h(ctx,t.currency)}</td>
+        <td>${conceptHtml}</td>
+        <td><span class="wlt-cur ${(t.currency||'').toLowerCase()}">${h(ctx,t.currency||'—')}</span></td>
         <td class="wlt-amt ${cls}">${sign}${fmt(amt)}</td>
         <td class="wlt-bal">${fmt(t.balance_after)}</td>
         <td class="wlt-date">${fmtDate(t.created_at)}</td>
@@ -49,7 +90,7 @@ function router(ctx) {
       title:"Mis créditos",
       area:"client",
       registry:reg(ctx),
-      content:`<link rel="stylesheet" href="/public/css/client-billing.css?v=2">
+      content:`<link rel="stylesheet" href="/public/css/client-billing.css?v=3">
       <div class="wlt-page">
         <header class="inv-page-head">
           <h1 class="display-title">Mis créditos</h1>
@@ -88,14 +129,6 @@ function router(ctx) {
               <span class="wlt-stat out"><i class="ri-arrow-down-line"></i> Gastos $${fmt(totalOut("MXN"))}</span>
             </div>
           </article>
-        </div>
-
-        <div class="wlt-info-box">
-          <i class="ri-information-line"></i>
-          <div>
-            <b>¿Cómo funcionan los créditos?</b>
-            <span>Tu saldo en cada moneda se usa automáticamente al pagar facturas o comprar productos. Las recargas se realizan generando una factura de tipo recarga desde el panel admin o contactando al equipo de soporte.</span>
-          </div>
         </div>
 
         <div class="wlt-tx-card">
