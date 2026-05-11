@@ -27,7 +27,7 @@ function finalizeExternalPayment(db, invoiceId, { provider, providerRef = "", am
   const inv = db.sqlite.prepare("SELECT * FROM invoices WHERE id=?").get(invoiceId);
   if (!inv) return { ok: false, error: "Factura no encontrada." };
   if (inv.status === "paid") return { ok: true, alreadyPaid: true, invoice: billing.fullInvoice(db, invoiceId) };
-  if (inv.status !== "pending") return { ok: false, error: "Factura no disponible para pago." };
+  if (inv.status !== "pending" && inv.status !== "suspended") return { ok: false, error: "Factura no disponible para pago." };
 
   if (amount != null && Math.abs(Number(amount) - Number(inv.total)) > 0.01) {
     console.warn("[payments] amount mismatch", { invoiceId, expected: inv.total, got: amount });
@@ -53,14 +53,16 @@ function finalizeExternalPayment(db, invoiceId, { provider, providerRef = "", am
       "INSERT INTO payments (invoice_id,user_id,provider,provider_ref,amount,currency,status,raw_json,created_at,confirmed_at) VALUES (?,?,?,?,?,?,?,?,?,?)"
     ).run(invoiceId, inv.user_id, provider, String(providerRef || ""), Number(inv.total), inv.currency, "paid",
       rawJson ? JSON.stringify(rawJson).slice(0, 8000) : "{}", db.now(), db.now());
-    db.sqlite.prepare(
-      "UPDATE invoices SET status='paid', payment_method=?, paid_at=? WHERE id=?"
-    ).run(provider, db.now(), invoiceId);
-    if (inv.type !== "renewal") {
+    try {
       db.sqlite.prepare(
-        "INSERT INTO services (user_id,product_id,invoice_id,status,next_invoice_at,created_at) VALUES (?,?,?,?,?,?)"
-      ).run(inv.user_id, product.id, invoiceId, "active", billing.nextDue(product, db.now()), db.now());
+        "UPDATE invoices SET status='paid', payment_method=?, paid_at=?, state_changed_at=? WHERE id=?"
+      ).run(provider, db.now(), db.now(), invoiceId);
+    } catch (_) {
+      db.sqlite.prepare(
+        "UPDATE invoices SET status='paid', payment_method=?, paid_at=? WHERE id=?"
+      ).run(provider, db.now(), invoiceId);
     }
+    billing.reactivateOrCreateService(db, inv, product, invoiceId, inv.user_id);
   });
 
   try { tx(); }
