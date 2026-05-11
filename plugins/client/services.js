@@ -37,8 +37,9 @@ function router(ctx){
       const st=statusInfo(s.status);
       const allocation=s.status==='active'?ctx.db.sqlite.prepare("SELECT delivered_content FROM delivery_allocations WHERE invoice_id=? AND user_id=? LIMIT 1").get(s.invoice_id,req.session.user.id):null;
       const thumb=s.image_path?`<img src="${h(ctx,s.image_path)}" alt="">`:`<div class="svc-thumb-fallback"><i class="ri-archive-2-line"></i></div>`;
-      const renewal=s.next_invoice_at?`<span class="svc-renew"><i class="ri-refresh-line"></i> Próx. renovación: ${fmtDate(s.next_invoice_at)}</span>`:'';
-      const info=allocation?`<div class="svc-info"><div class="svc-info-head"><i class="ri-key-2-line"></i> Información del producto</div><textarea readonly>${h(ctx,allocation.delivered_content)}</textarea></div>`:(s.status!=='active'?'<div class="svc-canceled-note"><i class="ri-eye-off-line"></i> Servicio cancelado. La información privada está oculta.</div>':'');
+      const renewal=s.status==='active'&&s.next_invoice_at?`<span class="svc-renew"><i class="ri-refresh-line"></i> Próx. renovación: ${fmtDate(s.next_invoice_at)}</span>`:'';
+      const hiddenLabel=({pending:'pendiente de pago',suspended:'suspendido',canceled:'cancelado'})[s.status]||s.status;
+      const info=allocation?`<div class="svc-info"><div class="svc-info-head"><i class="ri-key-2-line"></i> Información del producto</div><textarea readonly>${h(ctx,allocation.delivered_content)}</textarea></div>`:(s.status!=='active'?`<div class="svc-canceled-note"><i class="ri-eye-off-line"></i> Servicio ${h(ctx,hiddenLabel)}. La información privada está oculta por seguridad.</div>`:'');
 
       return `<article class="svc-card${s.status==='canceled'?' is-canceled':''}">
         <header class="svc-card-head">
