@@ -2,6 +2,7 @@
 
 const billing = require("./billing");
 function waNotify(db, event, payload){try{require("./wa").notify(db,event,payload).catch(()=>{})}catch(_){}}
+function mailNotify(db, event, payload){try{require("./mail-notify").notify(db,event,payload).catch(()=>{})}catch(_){}}
 
 function takeStockInternal(db, userId, product, invoiceId) {
   let row = null;
@@ -71,7 +72,10 @@ function finalizeExternalPayment(db, invoiceId, { provider, providerRef = "", am
   const final = billing.fullInvoice(db, invoiceId);
   try {
     const user = db.getUserById(inv.user_id);
-    if (user) waNotify(db, "invoice_paid", { user, invoice: final, product });
+    if (user) {
+      waNotify(db, "invoice_paid", { user, invoice: final, product });
+      mailNotify(db, "invoice_paid", { user, invoice: final, product });
+    }
   } catch (_) {}
   return { ok: true, invoice: final };
 }
