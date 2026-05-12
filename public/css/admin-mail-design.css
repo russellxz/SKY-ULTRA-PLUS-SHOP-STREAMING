@@ -561,3 +561,34 @@ body.light .ml-section-label::after { background: rgba(139,92,246,.1); }
   .ml-send-aside { flex-direction: column; }
   .ml-verify-toggle { flex-wrap: wrap; }
 }
+
+/* Tarjeta de ayuda para configurar Gmail / proveedores */
+.ml-help-card{
+  background:linear-gradient(145deg,rgba(13,18,38,.94),rgba(10,14,28,.78));
+  border:1px solid rgba(234,67,53,.22);
+  border-radius:22px; padding:22px;
+}
+body.light .ml-help-card{background:rgba(255,255,255,.96);border-color:rgba(234,67,53,.22)}
+.ml-help-card ol{color:rgba(233,242,255,.86)}
+body.light .ml-help-card ol{color:rgba(15,23,42,.85)}
+.ml-help-card a{word-break:break-all}
+.ml-hint-box{
+  padding:10px 12px;border-radius:12px;
+  background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.26);
+  display:flex;flex-direction:column;gap:2px;
+}
+body.light .ml-hint-box{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.22)}
+.ml-hint-box b{font-size:12px;font-weight:850;text-transform:uppercase;letter-spacing:.04em;color:#c4b5fd}
+body.light .ml-hint-box b{color:#5b21b6}
+.ml-hint-box span{font-size:13px;font-weight:700;color:rgba(233,242,255,.88)}
+body.light .ml-hint-box span{color:rgba(15,23,42,.85)}
+.ml-help-warn{
+  margin-top:14px;padding:12px 14px;border-radius:14px;
+  background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.32);
+  color:#fde68a;display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.55;
+}
+body.light .ml-help-warn{color:#92400e;background:rgba(245,158,11,.16)}
+.ml-help-warn i{font-size:18px;margin-top:1px;flex:0 0 18px}
+.ml-help-warn code{background:rgba(0,0,0,.25);padding:1px 6px;border-radius:6px;font-size:12px}
+body.light .ml-help-warn code{background:rgba(146,64,14,.12)}
+details summary::marker{color:#a78bfa}
