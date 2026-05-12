@@ -9,7 +9,7 @@ const config = {
   permission: "admin", order: 20,
 };
 
-const CSS = `<link rel="stylesheet" href="/public/css/admin-mail-design.css?v=5">`;
+const CSS = `<link rel="stylesheet" href="/public/css/admin-mail-design.css?v=6">`;
 
 function h(ctx, v) { return ctx.layout.escapeHtml(v || ""); }
 function reg(ctx)  { return require("../../core/pluginLoader").registry(ctx.db); }
@@ -284,7 +284,58 @@ function smtpConfigTab(ctx, cfg, req) {
       else{b.className='ml-status error';b.innerHTML='<i class="ri-close-circle-fill"></i> Error';}
     }catch{}
   })();` : ""}
-  </script>`;
+  </script>
+
+  ${notifyToggleSection(ctx, req)}
+  `;
+}
+
+/* ════════════════════════════════
+   Notificaciones automáticas por correo
+   (vienen desactivadas por defecto)
+════════════════════════════════ */
+function notifyEvent(key, label, desc, icon, checked) {
+  return `<label class="ml-notify-row">
+    <span class="ml-notify-icon"><i class="${icon}"></i></span>
+    <span class="ml-notify-text">
+      <b>${label}</b>
+      <small>${desc}</small>
+    </span>
+    <span class="ml-notify-toggle">
+      <input type="checkbox" name="${key}" value="1" ${checked ? "checked" : ""}>
+      <em></em>
+    </span>
+  </label>`;
+}
+
+function notifyToggleSection(ctx, req) {
+  const g = (k) => ctx.db.getSetting(k, "0") === "1";
+  const savedOk = req.query.notify_saved
+    ? `<div class="ml-notice success"><i class="ri-checkbox-circle-line"></i> Notificaciones por correo guardadas.</div>` : "";
+  return `
+  <section class="ml-card ml-notify-card" style="margin-top:18px">
+    <header class="ml-card-head">
+      <div class="ml-card-head-icon" style="background:rgba(139,92,246,.18);color:#a78bfa"><i class="ri-notification-3-line"></i></div>
+      <div>
+        <h3>Notificaciones automáticas por correo</h3>
+        <p>Avisa al cliente por email cuando hay actividad en su cuenta. Vienen desactivadas — activá las que quieras usar. Requiere SMTP configurado.</p>
+      </div>
+    </header>
+    ${savedOk}
+    <form method="POST" action="/admin/mail/save-notify" class="ml-form">
+      <div class="ml-notify-grid">
+        ${notifyEvent("mail_notify_invoice_pending",   "📩 Nueva factura pendiente",   "Cuando se crea una factura (compra o renovación) y queda esperando pago.", "ri-time-line",            g("mail_notify_invoice_pending"))}
+        ${notifyEvent("mail_notify_invoice_paid",      "✅ Pago confirmado",            "Cuando el cliente paga la factura (crédito, PayPal o Stripe).",             "ri-checkbox-circle-line", g("mail_notify_invoice_paid"))}
+        ${notifyEvent("mail_notify_invoice_suspended", "⚠️ Factura suspendida",        "Cuando el ciclo automático suspende una factura por falta de pago.",        "ri-pause-circle-line",    g("mail_notify_invoice_suspended"))}
+        ${notifyEvent("mail_notify_invoice_canceled",  "❌ Factura cancelada",          "Cancelación automática o manual de la factura.",                            "ri-close-circle-line",    g("mail_notify_invoice_canceled"))}
+        ${notifyEvent("mail_notify_service_suspended", "⚠️ Servicio suspendido",       "Cuando el servicio asociado a una factura queda suspendido.",               "ri-stack-line",           g("mail_notify_service_suspended"))}
+        ${notifyEvent("mail_notify_service_canceled",  "❌ Servicio cancelado",         "Cuando el servicio queda cancelado (manual o automático).",                 "ri-close-line",           g("mail_notify_service_canceled"))}
+      </div>
+      <button class="ml-btn primary" type="submit" style="margin-top:14px">
+        <i class="ri-save-3-line"></i> Guardar notificaciones
+      </button>
+    </form>
+  </section>`;
 }
 
 /* ════════════════════════════════
@@ -651,6 +702,21 @@ function router(ctx) {
   r.post("/toggle-verify", (req, res) => {
     ctx.db.setSetting("require_email_verification", req.body.enabled === "1" ? "1" : "0");
     res.redirect("/admin/mail?saved=1");
+  });
+
+  r.post("/save-notify", (req, res) => {
+    const keys = [
+      "mail_notify_invoice_pending",
+      "mail_notify_invoice_paid",
+      "mail_notify_invoice_suspended",
+      "mail_notify_invoice_canceled",
+      "mail_notify_service_suspended",
+      "mail_notify_service_canceled",
+    ];
+    for (const k of keys) {
+      ctx.db.setSetting(k, req.body[k] === "1" ? "1" : "0");
+    }
+    res.redirect("/admin/mail?tab=config&notify_saved=1");
   });
 
   r.post("/save-smtp", (req, res) => {
