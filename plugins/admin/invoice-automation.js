@@ -14,9 +14,9 @@ const config = {
 
 const DEF = {
   lifecycle_enabled: "1",
-  lifecycle_pending_minutes: "5",
-  lifecycle_suspend_minutes: "7",
-  lifecycle_cancel_minutes: "10",
+  lifecycle_pending_minutes: "1440",   // 1 día
+  lifecycle_suspend_minutes: "4320",   // 3 días
+  lifecycle_cancel_minutes: "10080",   // 7 días
 };
 
 const OPTIONS = [
@@ -224,6 +224,13 @@ function router(ctx) {
 
   ensureSchema(ctx.db);
   for (const [k, v] of Object.entries(DEF)) if (!ctx.db.getSetting(k, "")) ctx.db.setSetting(k, v);
+  // Migración suave: si los settings quedaron en los antiguos defaults de
+  // prueba (5/7/10 minutos), los subimos a los nuevos defaults de producción
+  // (1 día / 3 días / 7 días). Si el admin ya los personalizó NO se tocan.
+  const oldDefaults = { lifecycle_pending_minutes: "5", lifecycle_suspend_minutes: "7", lifecycle_cancel_minutes: "10" };
+  for (const [k, oldVal] of Object.entries(oldDefaults)) {
+    if (ctx.db.getSetting(k, "") === oldVal) ctx.db.setSetting(k, DEF[k]);
+  }
   startWorker(ctx);
 
   r.post("/save", (req, res) => {
