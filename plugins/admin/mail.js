@@ -9,7 +9,7 @@ const config = {
   permission: "admin", order: 20,
 };
 
-const CSS = `<link rel="stylesheet" href="/public/css/admin-mail-design.css?v=4">`;
+const CSS = `<link rel="stylesheet" href="/public/css/admin-mail-design.css?v=5">`;
 
 function h(ctx, v) { return ctx.layout.escapeHtml(v || ""); }
 function reg(ctx)  { return require("../../core/pluginLoader").registry(ctx.db); }
@@ -176,6 +176,54 @@ function smtpConfigTab(ctx, cfg, req) {
     </section>
 
   </div>
+
+  <!-- Ayuda Gmail / proveedores -->
+  <section class="ml-card ml-help-card" style="margin-top:18px">
+    <header class="ml-card-head">
+      <div class="ml-card-head-icon" style="background:rgba(234,67,53,.16);color:#ea4335"><i class="ri-google-fill"></i></div>
+      <div>
+        <h3>¿Cómo configurar Gmail paso a paso?</h3>
+        <p>Gmail bloquea las contraseñas normales para SMTP. Hay que generar una <b>contraseña de aplicación</b>.</p>
+      </div>
+    </header>
+    <ol style="margin:0;padding-left:20px;line-height:1.85;font-size:14px">
+      <li>Entra a tu cuenta de Gmail y activa la <b>verificación en 2 pasos</b> si aún no la tienes activa.<br>
+        <a href="https://myaccount.google.com/security" target="_blank" rel="noopener" style="color:#7dd3fc;font-weight:800;text-decoration:underline">myaccount.google.com/security</a>
+      </li>
+      <li>Una vez activada la verificación en 2 pasos, abre la página de <b>Contraseñas de aplicación</b>:<br>
+        <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color:#7dd3fc;font-weight:800;text-decoration:underline">myaccount.google.com/apppasswords</a>
+      </li>
+      <li>Crea una nueva contraseña de aplicación (puedes ponerle de nombre "Tienda" o "SMTP"). Te dará una contraseña de <b>16 letras</b> tipo <code style="background:rgba(139,92,246,.18);padding:2px 6px;border-radius:6px">abcd efgh ijkl mnop</code>.</li>
+      <li>Vuelve aquí y pega esos 16 caracteres en el campo <b>Contraseña SMTP</b> (con o sin espacios, da igual).</li>
+      <li>Usa estos valores para los demás campos:
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:8px">
+          <div class="ml-hint-box"><b>Host SMTP</b><span>smtp.gmail.com</span></div>
+          <div class="ml-hint-box"><b>Puerto</b><span>587</span></div>
+          <div class="ml-hint-box"><b>Seguridad</b><span>STARTTLS</span></div>
+          <div class="ml-hint-box"><b>Usuario SMTP</b><span>tu correo completo de Gmail</span></div>
+          <div class="ml-hint-box"><b>Correo del remitente</b><span>el mismo correo de Gmail</span></div>
+        </div>
+      </li>
+      <li>Pulsa <b>Guardar configuración</b> y luego <b>Probar conexión</b>. Si todo está bien, recibirás un correo de prueba.</li>
+    </ol>
+    <div class="ml-help-warn">
+      <i class="ri-error-warning-line"></i>
+      <div>
+        <b>Importante:</b> la contraseña de aplicación NO es la misma de tu cuenta de Gmail. Si pones la contraseña normal o la cuenta no tiene 2FA, Gmail responderá <code>535-5.7.8 Username and Password not accepted</code>.
+      </div>
+    </div>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer;font-weight:800;color:#a78bfa">¿Usas otro proveedor? (Outlook / Hotmail, Zoho, SendGrid, Mailgun)</summary>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px">
+        <div class="ml-hint-box"><b>Outlook / Hotmail</b><span>smtp.office365.com · 587 · STARTTLS</span></div>
+        <div class="ml-hint-box"><b>Zoho Mail</b><span>smtp.zoho.com · 465 · SSL/TLS</span></div>
+        <div class="ml-hint-box"><b>Yahoo Mail</b><span>smtp.mail.yahoo.com · 587 · STARTTLS</span></div>
+        <div class="ml-hint-box"><b>SendGrid</b><span>smtp.sendgrid.net · 587 · STARTTLS · user: apikey</span></div>
+        <div class="ml-hint-box"><b>Mailgun</b><span>smtp.mailgun.org · 587 · STARTTLS</span></div>
+        <div class="ml-hint-box"><b>Brevo (Sendinblue)</b><span>smtp-relay.brevo.com · 587 · STARTTLS</span></div>
+      </div>
+    </details>
+  </section>
 
   <script>
   /* password toggle */
