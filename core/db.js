@@ -83,7 +83,17 @@ function updateUser(userId, data) {
 }
 function setUserRole(userId, role) { const nextRole = normalizeRole(role); const user = getUserById(userId); if (!user) return { ok: false, error: "Usuario no encontrado." }; const admins = sqlite.prepare("SELECT COUNT(*) c FROM users WHERE role='admin'").get().c; if (user.role === "admin" && nextRole !== "admin" && admins <= 1) return { ok: false, error: "No puedes quitar el último admin." }; sqlite.prepare("UPDATE users SET role=? WHERE id=?").run(nextRole, userId); return { ok: true }; }
 function deleteUser(userId, currentAdminId) { const user = getUserById(userId); if (!user) return { ok: false, error: "Usuario no encontrado." }; if (Number(userId) === Number(currentAdminId)) return { ok: false, error: "No puedes borrar tu propia cuenta desde aquí." }; const admins = sqlite.prepare("SELECT COUNT(*) c FROM users WHERE role='admin'").get().c; if (user.role === "admin" && admins <= 1) return { ok: false, error: "No puedes borrar el último admin." }; sqlite.prepare("DELETE FROM users WHERE id=?").run(userId); return { ok: true }; }
-function ensureAdmin() { if (!getUserByEmail("ventasweb@gmail.com")) createUser({ first_name: "sky507", last_name: "", email: "ventasweb@gmail.com", password: "123456", role: "admin", emailVerified: 1 }); }
+function ensureAdmin() {
+  // Sólo se crea el admin semilla si NO existe ningún admin en el sistema.
+  // De lo contrario, al reiniciar el servidor se re-crearía el usuario
+  // "ventasweb@gmail.com" con la contraseña conocida "123456" aunque el
+  // dueño ya hubiera creado su propio admin y eliminado el de fábrica.
+  const adminCount = sqlite.prepare("SELECT COUNT(*) c FROM users WHERE role='admin'").get().c;
+  if (adminCount > 0) return;
+  if (!getUserByEmail("ventasweb@gmail.com")) {
+    createUser({ first_name: "sky507", last_name: "", email: "ventasweb@gmail.com", password: "123456", role: "admin", emailVerified: 1 });
+  }
+}
 function ensureCategory(area, name, icon, orderIndex) { const row = sqlite.prepare("SELECT id FROM plugin_categories WHERE area=? AND name=?").get(area, name); if (row) return row.id; return sqlite.prepare("INSERT INTO plugin_categories (area,name,icon,order_index) VALUES (?,?,?,?)").run(area, name, icon, orderIndex).lastInsertRowid; }
 function getWallet(userId, currency = "USD") { const c = normalizeCurrency(currency); let w = sqlite.prepare("SELECT * FROM wallets WHERE user_id=? AND currency=?").get(userId, c); if (!w) { sqlite.prepare("INSERT INTO wallets (user_id,currency,balance) VALUES (?,?,0)").run(userId, c); w = sqlite.prepare("SELECT * FROM wallets WHERE user_id=? AND currency=?").get(userId, c); } return w; }
 function adjustWallet({ userId, currency = "USD", amount = 0, type = "admin_adjustment", adminId = null, note = "", invoiceId = null }) { const c = normalizeCurrency(currency); const value = Number(amount || 0); if (!Number.isFinite(value) || value === 0) return { ok: false, error: "Monto inválido." }; const w = getWallet(userId, c); const before = Number(w.balance || 0); const after = before + value; sqlite.prepare("UPDATE wallets SET balance=? WHERE id=?").run(after, w.id); sqlite.prepare("INSERT INTO wallet_transactions (wallet_id,user_id,amount,balance_before,balance_after,type,invoice_id,admin_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)").run(w.id, userId, value, before, after, type, invoiceId, adminId, note, now()); return { ok: true, before, after, wallet: getWallet(userId, c) }; }
