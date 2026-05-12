@@ -4,253 +4,215 @@
 
 # 🚀 SKY ULTRA PLUS SHOP
 
-### Plataforma profesional para vender cuentas digitales, streaming y servicios online
+### Plataforma profesional para vender cuentas digitales, streaming, servicios online y membresías
 
-Convierte tu venta de cuentas de streaming en una tienda digital moderna, automatizada y personalizable.  
-Ideal para vendedores de Netflix, Disney+, HBO Max, Crunchyroll, IPTV, servicios digitales, membresías y productos con entrega por inventario.
+Una tienda digital moderna, personalizable y automatizada para llevar tu negocio de cuentas de streaming a otro nivel.
 
 <br>
 
 <a href="https://dash.skyultraplus.com">
-  <img src="https://cdn.russellxz.click/ba11c106.jpg" width="35" />
-</a>
-
-### 🌐 Instálala fácil en Sky Ultra Plus
-
-<a href="https://dash.skyultraplus.com">
-  <b>🔥 Alojar en Sky Ultra Plus</b>
+  <img src="https://img.shields.io/badge/Alojar%20en-Sky%20Ultra%20Plus-8A2BFF?style=for-the-badge&logo=cloudflare&logoColor=white" />
 </a>
 
 </div>
 
 ---
 
-## ✨ ¿Qué es SKY ULTRA PLUS SHOP?
+## 💎 Presentación
 
-**SKY ULTRA PLUS SHOP** es una página web completa para gestionar ventas digitales a otro nivel.  
-Permite crear productos, categorías, facturas automáticas, pagos únicos, pagos recurrentes, métodos de pago manuales y mucho más.
+**SKY ULTRA PLUS SHOP** es una plataforma web creada para vender productos digitales como cuentas de streaming, servicios online, membresías, renovaciones y productos con entrega privada.
 
-Está pensada para vendedores que quieren dejar de manejar todo manualmente y tener una tienda seria, moderna, rápida y con panel administrativo completo.
+Está pensada para negocios que quieren dejar de vender de forma manual y empezar a manejar todo desde un sistema profesional con clientes, productos, facturas, pagos, tickets, inventario y notificaciones.
 
 ---
 
-## 📸 Vista previa
+## 📸 Capturas del sistema
 
-### 🏠 Página principal
+<table>
+<tr>
+<td><img src="https://cdn.russellxz.click/5891869d.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/f9427da5.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/8ee4069e.jpg" width="100%"></td>
+</tr>
+<tr>
+<td><img src="https://cdn.russellxz.click/902067f0.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/15940073.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/be289319.jpg" width="100%"></td>
+</tr>
+<tr>
+<td><img src="https://cdn.russellxz.click/977091d3.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/87a7c37f.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/530a02e8.jpg" width="100%"></td>
+</tr>
+<tr>
+<td><img src="https://cdn.russellxz.click/ba1fb061.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/5856b043.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/6619bfee.jpg" width="100%"></td>
+</tr>
+<tr>
+<td><img src="https://cdn.russellxz.click/4ee7e163.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/0dd8db02.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/2cc0fbf4.jpg" width="100%"></td>
+</tr>
+<tr>
+<td><img src="https://cdn.russellxz.click/11c56a0f.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/f5a2daf2.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/ddad746a.jpg" width="100%"></td>
+</tr>
+<tr>
+<td><img src="https://cdn.russellxz.click/10762258.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/a97f24de.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/d0dd53a2.jpg" width="100%"></td>
+</tr>
+<tr>
+<td><img src="https://cdn.russellxz.click/ea6b4918.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/ae4a422c.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/2a3df0b5.jpg" width="100%"></td>
+</tr>
+<tr>
+<td><img src="https://cdn.russellxz.click/afc77645.jpg" width="100%"></td>
+<td><img src="https://cdn.russellxz.click/14cd6466.jpg" width="100%"></td>
+<td></td>
+</tr>
+</table>
 
-![Inicio](https://cdn.russellxz.click/5891869d.jpg)
+---
 
-### 🔐 Login moderno
+## 🔥 ¿Para qué sirve?
 
-![Login](https://cdn.russellxz.click/f9427da5.jpg)
+Esta página sirve para administrar una tienda digital completa desde un solo panel.
 
-### 🛡️ Panel administrador
+Puedes vender:
 
-![Admin](https://cdn.russellxz.click/8ee4069e.jpg)
+- Cuentas de Netflix, Disney+, HBO Max, Crunchyroll, YouTube, IPTV y más.
+- Servicios digitales.
+- Membresías.
+- Productos con entrega privada.
+- Servicios con renovación semanal, quincenal o mensual.
+- Productos de pago único.
 
-### 📊 Resumen con estadísticas
+---
 
-![Resumen](https://cdn.russellxz.click/902067f0.jpg)
+## ⚡ Funciones destacadas
 
-### 📦 Productos
+<table>
+<tr>
+<td>
 
-![Productos](https://cdn.russellxz.click/15940073.jpg)
+### 🛒 Tienda digital
 
-### ➕ Crear producto
+- Productos ilimitados.
+- Categorías personalizadas.
+- Imágenes por producto.
+- Stock disponible.
+- Productos visibles u ocultos.
+- Entrega privada después del pago.
 
-![Crear producto](https://cdn.russellxz.click/be289319.jpg)
+</td>
+<td>
 
-### 💳 Pagos manuales
+### 🧾 Facturación
 
-![Pago manual](https://cdn.russellxz.click/977091d3.jpg)
+- Facturas automáticas.
+- Pago único.
+- Pago semanal.
+- Pago cada 15 días.
+- Pago mensual.
+- Renovaciones automáticas.
+- Estados de factura.
+
+</td>
+</tr>
+<tr>
+<td>
+
+### 💳 Pagos
+
+- PayPal.
+- Stripe para pagos con tarjeta.
+- Pagos manuales.
+- Transferencia bancaria.
+- Depósito.
+- Métodos personalizados.
+
+</td>
+<td>
 
 ### 📧 SMTP Mail
 
-![SMTP](https://cdn.russellxz.click/87a7c37f.jpg)
+- Correo SMTP configurable.
+- Correos HTML.
+- Verificación de correo.
+- Recuperación de cuenta.
+- Notificaciones automáticas.
+- Remitente personalizado.
+
+</td>
+</tr>
+<tr>
+<td>
 
 ### 🤖 WhatsApp Bot
 
-![WhatsApp Bot](https://cdn.russellxz.click/530a02e8.jpg)
+- Notificaciones al cliente.
+- Notificaciones al administrador.
+- Avisos de facturas.
+- Avisos de pagos.
+- Avisos de suspensión.
+- Reenvío a grupos.
 
----
+</td>
+<td>
 
-## 🔥 Funciones principales
+### 🎨 Personalización
 
-### 🛒 Tienda digital completa
-
-- Venta de cuentas de streaming.
-- Venta de productos digitales.
-- Categorías personalizadas.
-- Productos con imagen, descripción, precio y stock.
-- Inventario visual por cada producto.
-- Entrega de información privada al cliente después del pago.
-- Productos visibles u ocultos.
-- Panel pensado para ventas rápidas y organizadas.
-
----
-
-## 🧾 Sistema de facturación
-
-La plataforma incluye un sistema de facturas completo para manejar ventas y renovaciones.
-
-Puedes crear facturas con:
-
-- Pago único.
-- Pago mensual.
-- Pago semanal.
-- Pago cada 15 días.
-- Ciclos automáticos de renovación.
-- Facturas pendientes.
-- Facturas pagadas.
-- Facturas suspendidas.
-- Facturas canceladas.
-
-Ideal para vender servicios que se renuevan cada cierto tiempo.
-
----
-
-## 💰 Métodos de pago
-
-### ✅ PayPal
-
-Conecta tu cuenta de PayPal para recibir pagos directamente desde la tienda.
-
-### ✅ Stripe
-
-Permite pagos con tarjeta usando Stripe.
-
-### ✅ Pagos manuales
-
-Puedes agregar métodos personalizados como:
-
-- Transferencia bancaria.
-- Depósito.
-- Binance Pay.
-- PayPal familiar.
-- Banco local.
-- Cualquier método manual que quieras mostrar al cliente.
-
-El cliente abre un ticket con su comprobante y el administrador puede verificarlo.
-
----
-
-## 🎨 Personalización completa
-
-La tienda es full personalizable.
-
-Puedes cambiar:
-
-- Nombre de la tienda.
 - Logo.
-- Colores principales.
-- Apariencia visual.
+- Nombre de tienda.
+- Colores.
+- Imágenes.
 - Modo claro.
 - Modo oscuro.
-- Imágenes.
-- Textos.
-- Diseño visual.
-- Colores de encabezado del correo.
-- Branding completo.
+- Apariencia completa.
+- Branding personalizado.
 
-Tu tienda puede verse totalmente diferente según tu marca.
-
----
-
-## 📧 Configuración SMTP
-
-Incluye configuración SMTP para enviar correos automáticos desde tu propio correo.
-
-Puedes configurar:
-
-- Servidor SMTP.
-- Puerto.
-- Seguridad STARTTLS.
-- Usuario SMTP.
-- Contraseña SMTP.
-- Correo remitente.
-- Nombre del remitente.
-- Verificación de correo para nuevos usuarios.
-- Correos HTML personalizados.
-
-Compatible con Gmail usando contraseña de aplicación.
+</td>
+</tr>
+</table>
 
 ---
 
-## 🤖 WhatsApp Bot integrado
+## 📊 Panel administrativo
 
-La plataforma incluye integración con WhatsApp Bot para enviar notificaciones automáticas.
+El sistema incluye un panel admin completo para controlar toda la tienda:
 
-Puedes configurar:
-
-- Número del bot.
-- Número del administrador.
-- URL pública de la tienda.
-- Notificaciones al cliente.
-- Notificaciones al admin.
-- Reenvío de avisos a grupos.
-- Eventos de facturas pendientes.
-- Facturas pagadas.
-- Facturas suspendidas.
-- Servicios cancelados.
-- Servicios suspendidos.
-
-Perfecto para mantener informado al cliente y al administrador en tiempo real.
-
----
-
-## 📊 Panel de administración
-
-El panel admin incluye estadísticas y control completo de la tienda.
-
-Puedes ver:
-
+- Resumen con estadísticas en tiempo real.
 - Total de usuarios.
 - Total de productos.
-- Total de facturas.
 - Total de ventas.
+- Total de facturas.
 - Tickets nuevos.
 - Servicios activos.
-- Stock disponible.
-- Resumen de facturas.
-- Inventario de productos.
-- Gráficas y métricas.
-
-Todo desde un diseño moderno, oscuro, futurista y fácil de usar.
-
----
-
-## 👥 Gestión de usuarios
-
-Administra usuarios desde el panel:
-
-- Ver usuarios registrados.
-- Ver estado de verificación.
-- Editar usuarios.
-- Gestionar roles.
-- Usuarios normales.
-- Administradores.
-- Información de contacto.
-- Historial de registro.
+- Inventario disponible.
+- Control de productos.
+- Control de categorías.
+- Control de facturas.
+- Control de pagos.
+- Configuración de apariencia.
+- Configuración de PayPal.
+- Configuración de Stripe.
+- Configuración de SMTP.
+- Configuración de WhatsApp Bot.
 
 ---
 
-## 🎫 Sistema de tickets
+## 🧾 Sistema de facturas automáticas
 
-Los clientes pueden contactar soporte desde la tienda.  
-También pueden abrir tickets para enviar comprobantes de pagos manuales.
+La plataforma permite crear productos o servicios con diferentes ciclos de cobro.
 
-Ideal para manejar soporte, verificaciones y reclamos sin perder información.
-
----
-
-## 📦 Inventario de entrega
-
-Cada producto puede tener su propio inventario privado.
-
-Ejemplo:
+Puedes configurar:
 
 ```txt
-Correo: cliente@email.com
-Contraseña: 123456
-PIN: 0000
-Perfil: Cliente 1
+Pago único
+Pago semanal
+Pago cada 15 días
+Pago mensual
