@@ -681,12 +681,38 @@ app.get("/", (req, res) => {
     </div>
   </section>` : "";
 
+  // Tarjeta de soporte (toma la config de admin/Marketing-Login)
+  const supEmail = db.getSetting("support_email", "");
+  const supWaC = db.getSetting("support_whatsapp_country", "+1");
+  const supWaN = db.getSetting("support_whatsapp_number", "");
+  const supWaG = db.getSetting("support_whatsapp_group", "");
+  const supItems = [];
+  if (supEmail) {
+    supItems.push(`<a href="mailto:${h(supEmail)}" class="cd-sup-btn email"><i class="ri-mail-line"></i><div><b>Escríbenos por correo</b><small>${h(supEmail)}</small></div></a>`);
+  }
+  if (supWaN) {
+    const waLink = "https://wa.me/" + (supWaC + supWaN).replace(/\D/g, "");
+    supItems.push(`<a href="${h(waLink)}" target="_blank" rel="noopener" class="cd-sup-btn wa"><i class="ri-whatsapp-line"></i><div><b>Chat por WhatsApp</b><small>${h(supWaC)} ${h(supWaN)}</small></div></a>`);
+  }
+  if (supWaG) {
+    supItems.push(`<a href="${h(supWaG)}" target="_blank" rel="noopener" class="cd-sup-btn group"><i class="ri-group-2-line"></i><div><b>Únete a la comunidad</b><small>Grupo de WhatsApp</small></div></a>`);
+  }
+  const supportCard = supItems.length ? `
+  <section class="cd-block cd-support">
+    <header class="cd-block-head">
+      <h3><i class="ri-customer-service-2-line"></i> ¿Necesitas ayuda?</h3>
+      <small style="color:rgba(233,242,255,.7);font-weight:600">Estamos para ayudarte</small>
+    </header>
+    <p style="margin:6px 0 14px;color:rgba(233,242,255,.72);font-size:14px">Contáctanos por el canal que prefieras y te respondemos a la brevedad.</p>
+    <div class="cd-sup-grid">${supItems.join("")}</div>
+  </section>` : "";
+
   res.renderPage({
     title: "Inicio",
     area: "client",
     registry,
     content: `
-<link rel="stylesheet" href="/public/css/client-dashboard.css?v=5">
+<link rel="stylesheet" href="/public/css/client-dashboard.css?v=6">
 <div class="cd-dash">
   ${welcomeNotice}
   ${verifyBanner}
@@ -695,6 +721,7 @@ app.get("/", (req, res) => {
   ${statsSection}
   ${categoriesSection}
   ${recentRows}
+  ${supportCard}
   ${guestCallout}
 </div>`
   });

@@ -598,3 +598,25 @@ body.light .cd-verify-btn.secondary{background:rgba(245,158,11,.1);color:#b45309
 }
 .cd-welcome-notice i{font-size:18px}
 body.light .cd-welcome-notice{background:rgba(5,150,105,.1);border-color:rgba(5,150,105,.35);color:#059669}
+
+/* Tarjeta de soporte en la home */
+.cd-support .cd-block-head{align-items:flex-end}
+.cd-sup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.cd-sup-btn{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-radius:16px;text-decoration:none;color:inherit;
+  background:rgba(139,92,246,.10);border:1px solid rgba(139,92,246,.26);
+  transition:transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+body.light .cd-sup-btn{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.22)}
+.cd-sup-btn:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.18);background:rgba(139,92,246,.16)}
+.cd-sup-btn i{
+  font-size:22px;width:42px;height:42px;border-radius:12px;
+  display:grid;place-items:center;flex:0 0 42px;color:#fff;
+}
+.cd-sup-btn.email i{background:linear-gradient(135deg,#7c3aed,#a855f7)}
+.cd-sup-btn.wa i{background:linear-gradient(135deg,#16a34a,#22c55e)}
+.cd-sup-btn.group i{background:linear-gradient(135deg,#2563eb,#0ea5e9)}
+.cd-sup-btn b{display:block;font-size:14px;font-weight:850}
+.cd-sup-btn small{display:block;color:rgba(233,242,255,.66);font-size:12px;margin-top:2px;font-weight:700}
+body.light .cd-sup-btn small{color:rgba(15,23,42,.62)}
