@@ -681,6 +681,44 @@ app.get("/", (req, res) => {
     </div>
   </section>` : "";
 
+  // Métodos de pago manual configurados por el admin
+  let manualMethods = [];
+  try {
+    manualMethods = db.sqlite.prepare(
+      "SELECT * FROM manual_payment_methods WHERE active=1 ORDER BY order_index, id"
+    ).all();
+  } catch (_) { manualMethods = []; }
+  const manualPaymentsCard = manualMethods.length ? `
+  <section class="cd-block cd-manual-pay">
+    <header class="cd-block-head">
+      <h3><i class="ri-bank-card-2-line"></i> Otras formas de pagar</h3>
+      <small style="color:rgba(233,242,255,.7);font-weight:700">Transferencia / depósito manual</small>
+    </header>
+    <p style="margin:6px 0 14px;color:rgba(233,242,255,.72);font-size:14px">
+      Si prefieres pagar por transferencia, elige un método y sigue las instrucciones. Después abre un ticket con tu comprobante y te acreditamos el saldo.
+    </p>
+    <div class="cd-mp-grid">
+      ${manualMethods.map((m) => {
+        const img = m.image_path
+          ? `<img src="${h(m.image_path)}" alt="">`
+          : `<div class="cd-mp-fallback"><i class="ri-bank-card-2-line"></i></div>`;
+        const desc = h(m.description || "").replace(/\n/g, "<br>");
+        return `<article class="cd-mp-card" style="--cd-mp-accent:${h(m.accent_color || "#7c3aed")}">
+          <div class="cd-mp-img">${img}</div>
+          <div class="cd-mp-body">
+            <h4>${h(m.title)}</h4>
+            <div class="cd-mp-desc">${desc || "<em style=\"opacity:.6\">Sin descripción</em>"}</div>
+            <a href="/tickets" class="cd-mp-cta"><i class="ri-customer-service-2-line"></i> Abrir ticket con comprobante</a>
+          </div>
+        </article>`;
+      }).join("")}
+    </div>
+    <div class="cd-mp-tip">
+      <i class="ri-information-line"></i>
+      <span>Después de transferir, toma capture del comprobante, abre un <a href="/tickets">ticket</a> y adjúntalo. En cuanto verifiquemos, te sumamos el crédito a tu cuenta.</span>
+    </div>
+  </section>` : "";
+
   // Tarjeta de soporte (toma la config de admin/Marketing-Login)
   const supEmail = db.getSetting("support_email", "");
   const supWaC = db.getSetting("support_whatsapp_country", "+1");
@@ -712,7 +750,7 @@ app.get("/", (req, res) => {
     area: "client",
     registry,
     content: `
-<link rel="stylesheet" href="/public/css/client-dashboard.css?v=6">
+<link rel="stylesheet" href="/public/css/client-dashboard.css?v=7">
 <div class="cd-dash">
   ${welcomeNotice}
   ${verifyBanner}
@@ -721,6 +759,7 @@ app.get("/", (req, res) => {
   ${statsSection}
   ${categoriesSection}
   ${recentRows}
+  ${manualPaymentsCard}
   ${supportCard}
   ${guestCallout}
 </div>`
