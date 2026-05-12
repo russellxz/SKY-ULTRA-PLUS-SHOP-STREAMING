@@ -324,17 +324,17 @@ function buildClientMessage(siteName, event, payload, url) {
   const home = url ? `\n\n🔗 ${url}` : "";
   switch (event) {
     case "invoice_pending":
-      return `🛒 *${siteName}*\n\n📩 *Nueva factura pendiente*\n\n${greet}, tienes una factura pendiente.\n\nFactura: *${inv.number || "—"}*\nProducto: *${prod.name || "—"}*\nMonto: *${inv.currency || ""} $${fmtMoney(inv.total)}*${link}\n\nPaga la factura para activar / mantener tu servicio.`;
+      return `🛒 *${siteName}*\n\n📩 *Nueva factura pendiente*\n🛍️ Producto: *${prod.name || "—"}*\n\n${greet}, tienes una factura pendiente de pago.\n\n📄 Factura: *${inv.number || "—"}*\n💰 Monto: *${inv.currency || ""} $${fmtMoney(inv.total)}*${link}\n\nPaga la factura para activar / mantener tu servicio.`;
     case "invoice_paid":
-      return `🛒 *${siteName}*\n\n✅ *Pago confirmado*\n\n${greet}, recibimos tu pago. ¡Gracias!\n\nFactura: *${inv.number || "—"}*\nProducto: *${prod.name || "—"}*\nMonto: *${inv.currency || ""} $${fmtMoney(inv.total)}*${link}`;
+      return `🛒 *${siteName}*\n\n✅ *Pago confirmado*\n🛍️ Producto: *${prod.name || "—"}*\n\n${greet}, recibimos tu pago. ¡Gracias por tu compra!\n\n📄 Factura: *${inv.number || "—"}*\n💰 Monto: *${inv.currency || ""} $${fmtMoney(inv.total)}*${link}`;
     case "invoice_suspended":
-      return `🛒 *${siteName}*\n\n⚠️ *Factura suspendida*\n\n${greet}, tu factura *${inv.number || "—"}* fue suspendida por falta de pago.\n\nProducto: *${prod.name || "—"}*\nMonto: *${inv.currency || ""} $${fmtMoney(inv.total)}*\n\nAún puedes pagarla para reactivar tu servicio.${link}`;
+      return `🛒 *${siteName}*\n\n⚠️ *Factura suspendida*\n🛍️ Producto: *${prod.name || "—"}*\n\n${greet}, tu factura *${inv.number || "—"}* fue suspendida por falta de pago.\n\n💰 Monto: *${inv.currency || ""} $${fmtMoney(inv.total)}*\n\nAún puedes pagarla para reactivar tu servicio.${link}`;
     case "invoice_canceled":
-      return `🛒 *${siteName}*\n\n❌ *Factura cancelada*\n\n${greet}, tu factura *${inv.number || "—"}* fue cancelada.\n\nProducto: *${prod.name || "—"}*\n\nSi crees que es un error, contacta al soporte.${home}`;
+      return `🛒 *${siteName}*\n\n❌ *Factura cancelada*\n🛍️ Producto: *${prod.name || "—"}*\n\n${greet}, tu factura *${inv.number || "—"}* fue cancelada.\n\nSi crees que es un error, contacta al soporte.${home}`;
     case "service_suspended":
-      return `🛒 *${siteName}*\n\n⚠️ *Servicio suspendido*\n\n${greet}, tu servicio *${prod.name || "—"}* fue suspendido por factura pendiente.\n\nPaga la factura para reactivarlo.${link}`;
+      return `🛒 *${siteName}*\n\n⚠️ *Servicio suspendido*\n🛍️ Producto: *${prod.name || "—"}*\n\n${greet}, tu servicio *${prod.name || "—"}* fue suspendido por factura pendiente.${inv.number?`\n\n📄 Factura: *${inv.number}*\n💰 Monto: *${inv.currency || ""} $${fmtMoney(inv.total)}*`:""}\n\nPaga la factura para reactivar el servicio.${inv.id?link:home}`;
     case "service_canceled":
-      return `🛒 *${siteName}*\n\n❌ *Servicio cancelado*\n\n${greet}, tu servicio *${prod.name || "—"}* fue cancelado.\n\nLa información privada ya no está disponible desde tu cuenta.${home}`;
+      return `🛒 *${siteName}*\n\n❌ *Servicio cancelado*\n🛍️ Producto: *${prod.name || "—"}*\n\n${greet}, tu servicio *${prod.name || "—"}* fue cancelado.${inv.number?`\n\n📄 Factura relacionada: *${inv.number}*`:""}\n\nLa información privada ya no está disponible desde tu cuenta.${home}`;
     default:
       return null;
   }
@@ -361,17 +361,18 @@ function buildAdminMessage(siteName, event, payload, url) {
     `🛒 *${siteName}* — Aviso admin`,
     "",
     title,
+    `🛍️ Producto: *${prod.name || "—"}*`,
     "",
-    `Cliente: *${clientName}*`,
-    `Correo: ${u.email || "—"}`,
-    `Teléfono: ${phone}`,
+    `👤 Cliente: *${clientName}*`,
+    `✉️ Correo: ${u.email || "—"}`,
+    `📞 Teléfono: ${phone}`,
   ];
   if (inv && inv.number) {
-    lines.push(`Factura: ${inv.number}`);
-    lines.push(`Monto: ${inv.currency || ""} $${fmtMoney(inv.total)}`);
-    if (inv.status) lines.push(`Estado: ${inv.status}`);
+    lines.push("");
+    lines.push(`📄 Factura: ${inv.number}`);
+    lines.push(`💰 Monto: ${inv.currency || ""} $${fmtMoney(inv.total)}`);
+    if (inv.status) lines.push(`📌 Estado: ${inv.status}`);
   }
-  if (prod && prod.name) lines.push(`Producto: ${prod.name}`);
   if (url) {
     lines.push("");
     if (inv && inv.id) lines.push(`🔗 ${url}/admin/invoices/${inv.id}`);
@@ -448,14 +449,18 @@ function notifyByInvoiceId(db, event, invoiceId) {
   } catch (_) {}
 }
 
-function notifyByServiceId(db, event, serviceId) {
+function notifyByServiceId(db, event, serviceId, triggerInvoiceId = null) {
   try {
     const svc = db.sqlite.prepare("SELECT * FROM services WHERE id=?").get(serviceId);
     if (!svc) return;
     const user = db.getUserById(svc.user_id);
     if (!user) return;
     const product = db.sqlite.prepare("SELECT * FROM products WHERE id=?").get(svc.product_id) || { name: "—" };
-    const invoice = svc.invoice_id ? db.sqlite.prepare("SELECT * FROM invoices WHERE id=?").get(svc.invoice_id) : null;
+    // Si nos pasaron una factura "disparadora" (renovación impaga) la usamos;
+    // si no, caemos a la factura original del servicio.
+    let invoice = null;
+    if (triggerInvoiceId) invoice = db.sqlite.prepare("SELECT * FROM invoices WHERE id=?").get(triggerInvoiceId);
+    if (!invoice && svc.invoice_id) invoice = db.sqlite.prepare("SELECT * FROM invoices WHERE id=?").get(svc.invoice_id);
     notify(db, event, { user, invoice, product, service: svc }).catch(() => {});
   } catch (_) {}
 }

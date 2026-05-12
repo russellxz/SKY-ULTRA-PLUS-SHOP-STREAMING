@@ -109,7 +109,7 @@ function tickOnce(db) {
     try {
       const wa = require("../../core/wa");
       wa.notifyByInvoiceId(db, "invoice_suspended", r.id);
-      if (serviceWasSuspended) wa.notifyByServiceId(db, "service_suspended", svc.id);
+      if (serviceWasSuspended) wa.notifyByServiceId(db, "service_suspended", svc.id, r.id);
     } catch (_) {}
   }
 
@@ -130,7 +130,7 @@ function tickOnce(db) {
     try {
       const wa = require("../../core/wa");
       wa.notifyByInvoiceId(db, "invoice_canceled", r.id);
-      if (serviceWasCanceled) wa.notifyByServiceId(db, "service_canceled", svc.id);
+      if (serviceWasCanceled) wa.notifyByServiceId(db, "service_canceled", svc.id, r.id);
     } catch (_) {}
   }
 
