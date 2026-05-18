@@ -50,6 +50,19 @@ function router({ db, auth, layout }) {
     const supWaC = db.getSetting("support_whatsapp_country","+1");
     const supWaN = db.getSetting("support_whatsapp_number","");
     const supWaG = db.getSetting("support_whatsapp_group","");
+    // Estilo del marketing
+    const gdFrom = db.getSetting("promo_title_grad_from_dark","#a78bfa");
+    const gdTo   = db.getSetting("promo_title_grad_to_dark","#60a5fa");
+    const glFrom = db.getSetting("promo_title_grad_from_light","#2563eb");
+    const glTo   = db.getSetting("promo_title_grad_to_light","#7c3aed");
+    const pAlign = db.getSetting("promo_text_align","left");
+    // Google OAuth
+    const goEnabled = db.getSetting("google_oauth_enabled","0") === "1";
+    const goCid     = db.getSetting("google_oauth_client_id","");
+    const goSec     = db.getSetting("google_oauth_client_secret","");
+    const proto = req.protocol;
+    const host  = req.get("host");
+    const callbackUrl = `${proto}://${host}/auth/google/callback`;
     const flash = req.query.ok
       ? `<div class="sp-flash ok"><i class="ri-check-circle-line"></i> Guardado correctamente.</div>`
       : req.query.err
@@ -85,6 +98,60 @@ function router({ db, auth, layout }) {
 </div>
 <div class="sp-toast" id="spToast"><i class="ri-checkbox-circle-line"></i><span>Guardado</span></div>`;
 
+    // Estilo del marketing (gradiente + alineación)
+    const styleHtml = `
+<div class="sp-card">
+  <h3 class="sp-sect"><i class="ri-magic-line"></i> Estilo del marketing</h3>
+  <p style="margin:0 0 14px;opacity:.7;font-size:13px">Personaliza el degradado del título de cada slide y dónde se alinea el texto. Aplica en /login y /register.</p>
+  <form method="POST" action="/admin/support/save-style">
+    <div class="sp-2col">
+      <div class="sp-field"><label>Texto del título (gradiente · modo oscuro)</label>
+        <div style="display:flex;gap:8px;align-items:center"><input type="color" name="promo_title_grad_from_dark" value="${h(gdFrom)}" style="width:54px;height:42px;border-radius:10px;border:1px solid rgba(139,92,246,.3);cursor:pointer"><input type="text" value="${h(gdFrom)}" readonly style="flex:1"><span style="opacity:.5">→</span><input type="color" name="promo_title_grad_to_dark" value="${h(gdTo)}" style="width:54px;height:42px;border-radius:10px;border:1px solid rgba(139,92,246,.3);cursor:pointer"><input type="text" value="${h(gdTo)}" readonly style="flex:1"></div>
+        <small style="opacity:.6;margin-top:4px">Por defecto morado → azul.</small>
+      </div>
+      <div class="sp-field"><label>Texto del título (gradiente · modo claro)</label>
+        <div style="display:flex;gap:8px;align-items:center"><input type="color" name="promo_title_grad_from_light" value="${h(glFrom)}" style="width:54px;height:42px;border-radius:10px;border:1px solid rgba(99,102,241,.3);cursor:pointer"><input type="text" value="${h(glFrom)}" readonly style="flex:1"><span style="opacity:.5">→</span><input type="color" name="promo_title_grad_to_light" value="${h(glTo)}" style="width:54px;height:42px;border-radius:10px;border:1px solid rgba(99,102,241,.3);cursor:pointer"><input type="text" value="${h(glTo)}" readonly style="flex:1"></div>
+        <small style="opacity:.6;margin-top:4px">Por defecto azul → morado.</small>
+      </div>
+    </div>
+    <div class="sp-field" style="margin-top:14px"><label>Alineación del texto en el slide</label>
+      <div style="display:flex;gap:14px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:10px 14px;border-radius:12px;background:${pAlign==='left'?'rgba(124,58,237,.18)':'rgba(124,58,237,.06)'};border:1px solid ${pAlign==='left'?'rgba(124,58,237,.5)':'rgba(124,58,237,.2)'}"><input type="radio" name="promo_text_align" value="left" ${pAlign==='left'?'checked':''}> <i class="ri-align-left"></i> Al lado (izquierda)</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:10px 14px;border-radius:12px;background:${pAlign==='center'?'rgba(124,58,237,.18)':'rgba(124,58,237,.06)'};border:1px solid ${pAlign==='center'?'rgba(124,58,237,.5)':'rgba(124,58,237,.2)'}"><input type="radio" name="promo_text_align" value="center" ${pAlign==='center'?'checked':''}> <i class="ri-align-center"></i> Centrado</label>
+      </div>
+    </div>
+    <div class="sp-actions"><button type="submit" class="sp-btn primary"><i class="ri-save-line"></i> Guardar estilo</button></div>
+  </form>
+</div>`;
+
+    // Google OAuth config
+    const googleHtml = `
+<div class="sp-card">
+  <h3 class="sp-sect"><i class="ri-google-fill"></i> Inicio de sesión con Google</h3>
+  <p style="margin:0 0 14px;opacity:.7;font-size:13px">Si activas esto y configuras Client ID / Secret, los usuarios verán un botón <b>"Continuar con Google"</b> en /login y /register. Al registrarse con Google se les pedirá nombre, apellido, teléfono y contraseña antes de entrar.</p>
+  <form method="POST" action="/admin/support/save-google">
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 16px;border-radius:12px;background:${goEnabled?'rgba(34,197,94,.14)':'rgba(148,163,184,.1)'};border:1px solid ${goEnabled?'rgba(34,197,94,.32)':'rgba(148,163,184,.24)'};margin-bottom:14px"><input type="checkbox" name="google_oauth_enabled" value="1" ${goEnabled?'checked':''}> <span><b>Activar Google OAuth</b> <small style="display:block;opacity:.7">${goEnabled?'Activado':'Desactivado'} — sólo aparece el botón si está activado <em>y</em> tiene Client ID configurado.</small></span></label>
+    <div class="sp-field"><label>Client ID</label><input type="text" name="google_oauth_client_id" value="${h(goCid)}" placeholder="123456789-abcdef.apps.googleusercontent.com" autocomplete="off"></div>
+    <div class="sp-field"><label>Client Secret</label><input type="password" name="google_oauth_client_secret" value="${h(goSec)}" placeholder="${goSec?'(guardado, escribe para cambiar)':'GOCSPX-...'}" autocomplete="new-password"></div>
+    <div class="sp-field"><label>URL de redirect autorizada (copiar en Google Cloud)</label><input type="text" value="${h(callbackUrl)}" readonly onclick="this.select()" style="background:rgba(124,58,237,.12);font-family:monospace;font-size:13px"></div>
+    <div class="sp-actions" style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button type="submit" class="sp-btn primary"><i class="ri-save-line"></i> Guardar Google OAuth</button>
+      <a href="https://developers.google.com/identity/protocols/oauth2/web-server?hl=es#enable-apis" target="_blank" rel="noopener" class="sp-btn secondary"><i class="ri-external-link-line"></i> Documentación oficial</a>
+    </div>
+  </form>
+  <details style="margin-top:16px;padding:14px 16px;border-radius:14px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.22)">
+    <summary style="cursor:pointer;font-weight:800;color:#c4b5fd">📋 Cómo crear las credenciales en Google Cloud (paso a paso)</summary>
+    <ol style="margin:12px 0 0;padding-left:20px;line-height:1.85;font-size:13px">
+      <li>Entra a <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:#7dd3fc;text-decoration:underline">console.cloud.google.com</a> y crea (o elige) un proyecto.</li>
+      <li>Ve a <b>APIs y servicios → Pantalla de consentimiento OAuth</b>, configura una pantalla "Externa", llena el nombre de la app y tu correo de soporte, y publícala (modo Producción o Testing).</li>
+      <li>Ve a <b>APIs y servicios → Credenciales</b> → <b>Crear credenciales → ID de cliente OAuth</b> → <b>Aplicación web</b>.</li>
+      <li>En <b>URI de redireccionamiento autorizados</b> pega exactamente:<br><code style="display:inline-block;padding:6px 10px;border-radius:6px;background:rgba(0,0,0,.25);margin-top:6px;font-size:12px">${h(callbackUrl)}</code></li>
+      <li>Te dará un <b>Client ID</b> y un <b>Client Secret</b>. Copia ambos y pégalos en los campos de arriba.</li>
+      <li>Activa el toggle y guarda. El botón "Continuar con Google" aparecerá automáticamente en /login y /register.</li>
+    </ol>
+  </details>
+</div>`;
+
     const content = `
 <link rel="stylesheet" href="/public/css/admin-support.css?v=7">
 <div class="sp-page">
@@ -93,9 +160,13 @@ function router({ db, auth, layout }) {
   <div class="sp-tabs">
     <button class="sp-tab${tab==="contact"?" active":""}" data-tab="contact" type="button"><i class="ri-contacts-line"></i> Soporte</button>
     <button class="sp-tab${tab==="slides"?" active":""}" data-tab="slides" type="button"><i class="ri-slideshow-line"></i> Slides</button>
+    <button class="sp-tab${tab==="style"?" active":""}" data-tab="style" type="button"><i class="ri-magic-line"></i> Estilo</button>
+    <button class="sp-tab${tab==="google"?" active":""}" data-tab="google" type="button"><i class="ri-google-fill"></i> Google OAuth</button>
   </div>
   <div id="spPanelContact" style="display:${tab==="contact"?"block":"none"}">${contactHtml}</div>
   <div id="spPanelSlides" style="display:${tab==="slides"?"block":"none"}">${slidesHtml}</div>
+  <div id="spPanelStyle" style="display:${tab==="style"?"block":"none"}">${styleHtml}</div>
+  <div id="spPanelGoogle" style="display:${tab==="google"?"block":"none"}">${googleHtml}</div>
 </div>
 <script type="application/json" id="spInitData">${safeJson(slides)}</script>
 <script src="/public/js/admin-support.js?v=7"></script>`;
@@ -120,6 +191,37 @@ function router({ db, auth, layout }) {
       image: String(s.image || ""),
     };
   }
+
+  r.post("/save-style", (req, res) => {
+    try {
+      const cleanColor = (v, fb) => {
+        const s = String(v || "").trim();
+        return /^#[0-9a-fA-F]{6}$/.test(s) ? s : fb;
+      };
+      db.setSetting("promo_title_grad_from_dark", cleanColor(req.body.promo_title_grad_from_dark, "#a78bfa"));
+      db.setSetting("promo_title_grad_to_dark",   cleanColor(req.body.promo_title_grad_to_dark,   "#60a5fa"));
+      db.setSetting("promo_title_grad_from_light",cleanColor(req.body.promo_title_grad_from_light,"#2563eb"));
+      db.setSetting("promo_title_grad_to_light",  cleanColor(req.body.promo_title_grad_to_light,  "#7c3aed"));
+      const align = req.body.promo_text_align === "center" ? "center" : "left";
+      db.setSetting("promo_text_align", align);
+      res.redirect("/admin/support?tab=style&ok=1");
+    } catch (e) {
+      res.redirect("/admin/support?tab=style&err=" + encodeURIComponent(e.message));
+    }
+  });
+
+  r.post("/save-google", (req, res) => {
+    try {
+      db.setSetting("google_oauth_enabled", req.body.google_oauth_enabled === "1" ? "1" : "0");
+      const cid = String(req.body.google_oauth_client_id || "").trim();
+      db.setSetting("google_oauth_client_id", cid);
+      const sec = String(req.body.google_oauth_client_secret || "").trim();
+      if (sec) db.setSetting("google_oauth_client_secret", sec);
+      res.redirect("/admin/support?tab=google&ok=1");
+    } catch (e) {
+      res.redirect("/admin/support?tab=google&err=" + encodeURIComponent(e.message));
+    }
+  });
 
   r.post("/save-contact", (req, res) => {
     try {
