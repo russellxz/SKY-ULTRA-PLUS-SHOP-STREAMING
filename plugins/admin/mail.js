@@ -9,7 +9,7 @@ const config = {
   permission: "admin", order: 20,
 };
 
-const CSS = `<link rel="stylesheet" href="/public/css/admin-mail-design.css?v=6">`;
+const CSS = `<link rel="stylesheet" href="/public/css/admin-mail-design.css?v=7">`;
 
 function h(ctx, v) { return ctx.layout.escapeHtml(v || ""); }
 function reg(ctx)  { return require("../../core/pluginLoader").registry(ctx.db); }
@@ -615,10 +615,15 @@ function sendMailTab(ctx, req) {
 /* ════════════════════════════════
    TAB 3 — Historial
 ════════════════════════════════ */
-function historyTab(ctx) {
+function historyTab(ctx, req) {
   const logs = ctx.db.sqlite.prepare(
     "SELECT ml.*, u.username admin_username FROM mail_log ml LEFT JOIN users u ON u.id=ml.admin_id ORDER BY ml.id DESC LIMIT 200"
   ).all();
+  const failedCount = logs.filter((l) => l.status === "failed").length;
+  const retriedNotice = req && req.query && req.query.retried
+    ? `<div class="ml-notice success" style="margin-bottom:14px"><i class="ri-checkbox-circle-line"></i> Correo reenviado correctamente.</div>` : "";
+  const errorNotice = req && req.query && req.query.error
+    ? `<div class="ml-notice error" style="margin-bottom:14px"><i class="ri-error-warning-line"></i> ${h(ctx, req.query.error)}</div>` : "";
 
   function fmtDate(v) {
     if (!v) return "—";
@@ -641,6 +646,9 @@ function historyTab(ctx) {
         ? `<span class="ml-log-err" title="${h(ctx, l.error_msg)}">${h(ctx, (l.error_msg||"").substring(0,45))}…</span>`
         : "—"}</td>
       <td class="ml-log-date">${h(ctx, fmtDate(l.sent_at))}</td>
+      <td class="ml-log-actions">${l.status === "failed" && l.body_html
+        ? `<form method="POST" action="/admin/mail/retry/${l.id}" style="margin:0" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').innerHTML='<i class=\\'ri-loader-4-line ml-spin\\'></i>'"><button type="submit" class="ml-retry-btn"><i class="ri-refresh-line"></i> Reintentar</button></form>`
+        : (l.status === "failed" ? `<span class="ml-log-noret" title="Sin cuerpo guardado">No reintenta</span>` : "—")}</td>
     </tr>`).join("");
 
   return `
@@ -651,9 +659,10 @@ function historyTab(ctx) {
       </div>
       <div>
         <h3>Historial de envíos</h3>
-        <p>Últimos 200 correos enviados por el sistema.</p>
+        <p>Últimos 200 correos enviados por el sistema. ${failedCount > 0 ? `<b style="color:#f87171">${failedCount} fallido${failedCount===1?"":"s"}</b> — puedes reenviarlos individualmente.` : ""}</p>
       </div>
     </header>
+    ${retriedNotice}${errorNotice}
     ${logs.length === 0
       ? `<div class="ml-empty"><i class="ri-mail-line"></i><p>Aún no se han enviado correos desde este panel.</p></div>`
       : `<div class="ml-table-wrap">
@@ -661,7 +670,7 @@ function historyTab(ctx) {
             <thead>
               <tr>
                 <th>Estado</th><th>Destinatario</th><th>Nombre</th>
-                <th>Asunto</th><th>Error</th><th>Fecha</th>
+                <th>Asunto</th><th>Error</th><th>Fecha</th><th>Acciones</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
@@ -676,6 +685,40 @@ function historyTab(ctx) {
 function router(ctx) {
   const r = express.Router();
   r.use(ctx.auth.requireAdmin);
+  // Migración: agregar columna body_html al historial para poder reenviar
+  try {
+    const cols = ctx.db.sqlite.prepare("PRAGMA table_info(mail_log)").all().map((c) => c.name);
+    if (!cols.includes("body_html")) ctx.db.sqlite.exec("ALTER TABLE mail_log ADD COLUMN body_html TEXT DEFAULT ''");
+  } catch (_) {}
+
+  // Reintentar un correo fallido
+  r.post("/retry/:id", async (req, res) => {
+    const id = Number(req.params.id);
+    const row = ctx.db.sqlite.prepare("SELECT * FROM mail_log WHERE id=?").get(id);
+    if (!row) return res.redirect("/admin/mail?tab=history&error=" + encodeURIComponent("Registro no encontrado."));
+    if (!row.body_html) return res.redirect("/admin/mail?tab=history&error=" + encodeURIComponent("Este correo es de antes del log con cuerpo; no se puede reenviar."));
+    const result = await mailer.sendMail(ctx.db, {
+      to: row.recipient_email,
+      toName: row.recipient_name || "",
+      subject: row.subject,
+      bodyHtml: row.body_html,
+      baseUrl: getBaseUrl(req),
+    });
+    if (result.ok) {
+      ctx.db.sqlite.prepare("UPDATE mail_log SET status='sent', error_msg='', sent_at=? WHERE id=?").run(new Date().toISOString(), id);
+      mailer.logMail(ctx.db, {
+        adminId: req.session.user.id,
+        recipientEmail: row.recipient_email,
+        recipientName: row.recipient_name || "",
+        subject: row.subject + " (reintento)",
+        status: "sent",
+        bodyHtml: row.body_html,
+      });
+      return res.redirect("/admin/mail?tab=history&retried=1");
+    }
+    ctx.db.sqlite.prepare("UPDATE mail_log SET error_msg=? WHERE id=?").run(result.error || "Error desconocido", id);
+    res.redirect("/admin/mail?tab=history&error=" + encodeURIComponent(result.error || "Error reenviando"));
+  });
 
   r.get("/status", async (req, res) => {
     res.json(await mailer.testConnection(ctx.db));
@@ -763,6 +806,7 @@ function router(ctx) {
         recipientEmail: u.email, recipientName: name,
         subject, status: result.ok ? "sent" : "failed",
         errorMsg: result.ok ? "" : result.error,
+        bodyHtml: body,
       });
       if (result.ok) sent++;
     }
@@ -775,7 +819,7 @@ function router(ctx) {
 
     let tabContent = "";
     if      (tab === "send")    tabContent = sendMailTab(ctx, req);
-    else if (tab === "history") tabContent = historyTab(ctx);
+    else if (tab === "history") tabContent = historyTab(ctx, req);
     else                        tabContent = smtpConfigTab(ctx, cfg, req);
 
     res.renderPage({
