@@ -77,7 +77,25 @@ function saveAttachment(file){
   return { path: "/uploads/tickets/"+name, type };
 }
 
-const ASSETS = `<link rel="stylesheet" href="/public/css/tickets-design.css?v=1"><script src="/public/js/tickets.js?v=1" defer></script>`;
+const ASSETS = `<link rel="stylesheet" href="/public/css/tickets-design.css?v=2"><script src="/public/js/tickets.js?v=1" defer></script>
+<style>
+  .tk-modal{position:fixed;inset:0;background:rgba(2,6,15,.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9999;padding:18px}
+  .tk-modal.open{display:flex}
+  .tk-modal-box{background:linear-gradient(145deg,rgba(13,18,38,.96),rgba(10,14,28,.92));border:1px solid rgba(139,92,246,.32);border-radius:22px;padding:26px;max-width:520px;width:100%;color:#e9f2ff;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  body.light .tk-modal-box{background:rgba(255,255,255,.98);color:#102033;border-color:rgba(99,102,241,.32)}
+  .tk-modal-x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:10px;background:rgba(244,63,94,.16);border:1px solid rgba(244,63,94,.32);color:#fb7185;display:grid;place-items:center;cursor:pointer;font-size:18px}
+  .tk-modal-box h2{margin:0 0 4px;font-size:18px;font-weight:900;display:flex;align-items:center;gap:8px}
+  .tk-new-form{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+  .tk-field{display:flex;flex-direction:column;gap:6px}
+  .tk-field>span{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;opacity:.75}
+  .tk-field input[type=text],.tk-field select,.tk-field textarea{background:rgba(15,23,42,.6);border:1px solid rgba(139,92,246,.32);color:inherit;border-radius:11px;padding:10px 14px;font-family:inherit;font-size:14px;font-weight:600;width:100%;box-sizing:border-box}
+  body.light .tk-field input[type=text],body.light .tk-field select,body.light .tk-field textarea{background:rgba(255,255,255,.9);border-color:rgba(99,102,241,.32)}
+  .tk-field textarea{min-height:90px;resize:vertical;line-height:1.5}
+  .tk-new-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+  .tk-modal-cancel{background:rgba(148,163,184,.18);color:inherit;border:1px solid rgba(148,163,184,.32);padding:9px 16px;border-radius:11px;font-weight:800;cursor:pointer}
+  .tk-create-btn{background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;border:0;padding:10px 16px;border-radius:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .tk-create-btn:hover{filter:brightness(1.07)}
+</style>`;
 
 function statusLabel(s){return ({open:"Abierto",pending:"En proceso",solved:"Resuelto",closed:"Cerrado"})[s]||s;}
 
@@ -85,6 +103,33 @@ function router(ctx){
   const r = express.Router();
   r.use(ctx.auth.requireAdmin);
   migrate(ctx.db);
+
+  // Crear ticket en nombre de un usuario
+  r.post("/create-for", (req,res)=>{
+    const userId = Number(req.body.user_id || 0);
+    const subject = String(req.body.subject || "").trim();
+    const body = String(req.body.body || "").trim();
+    if (!userId || !subject) return res.redirect("/admin/tickets?error=" + encodeURIComponent("Selecciona un usuario y escribe el asunto."));
+    const u = ctx.db.getUserById(userId);
+    if (!u) return res.redirect("/admin/tickets?error=" + encodeURIComponent("Usuario no encontrado."));
+    let attach = null;
+    try {
+      if (req.files && req.files.attachment) attach = saveAttachment(req.files.attachment);
+    } catch (e) {
+      return res.redirect("/admin/tickets?error=" + encodeURIComponent(e.message));
+    }
+    const now = ctx.db.now();
+    const info = ctx.db.sqlite.prepare(
+      "INSERT INTO tickets (user_id,subject,status,created_at,last_activity_at) VALUES (?,?,?,?,?)"
+    ).run(userId, subject, "open", now, now);
+    const ticketId = info.lastInsertRowid;
+    if (body || attach) {
+      ctx.db.sqlite.prepare(
+        "INSERT INTO ticket_messages (ticket_id,user_id,role,body,attachment_path,attachment_type,created_at) VALUES (?,?,?,?,?,?,?)"
+      ).run(ticketId, req.session.user.id, "admin", body, attach ? attach.path : "", attach ? attach.type : "", now);
+    }
+    res.redirect(`/admin/tickets/${ticketId}?created=1`);
+  });
 
   r.post("/:id/message", (req,res)=>{
     const id = req.params.id;
@@ -234,6 +279,13 @@ function router(ctx){
     };
     let msg = "";
     if(req.query.ok==="delete") msg = `<div class="notice success" style="margin:0">Ticket eliminado.</div>`;
+    if(req.query.error) msg = `<div class="notice error" style="margin:0">${h(ctx,req.query.error)}</div>`;
+    // Lista de usuarios para el modal "crear ticket en nombre de"
+    const users = ctx.db.sqlite.prepare("SELECT id, first_name, last_name, email, username FROM users WHERE role='user' ORDER BY first_name, last_name, email LIMIT 500").all();
+    const userOpts = users.map(u=>{
+      const name = `${u.first_name||""} ${u.last_name||""}`.trim() || u.username || u.email;
+      return `<option value="${u.id}">${h(ctx,name)} — ${h(ctx,u.email)}</option>`;
+    }).join("");
     const cards = list.map(t=>{
       const fullName = `${t.first_name||t.username||""} ${t.last_name||""}`.trim()||t.email;
       const last = (t.last_msg||"").slice(0,80) + ((t.last_msg||"").length>80?"…":"");
@@ -264,6 +316,7 @@ function router(ctx){
       <h1>Tickets de soporte</h1>
       <p>Gestiona las conversaciones con tus clientes.</p>
     </div>
+    <button type="button" class="tk-create-btn" onclick="document.getElementById('tkNewModal').classList.add('open')"><i class="ri-add-circle-line"></i> Nuevo ticket</button>
   </div>
   ${msg}
   <div class="tk-stats">
@@ -278,6 +331,34 @@ function router(ctx){
   </div>
   <div class="tk-list">
     ${cards||'<div class="tk-empty"><i class="ri-customer-service-2-line"></i><h3>No hay tickets aún</h3><p>Cuando un cliente abra un ticket, aparecerá aquí.</p></div>'}
+  </div>
+</div>
+<div class="tk-modal" id="tkNewModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="tk-modal-box">
+    <button type="button" class="tk-modal-x" onclick="document.getElementById('tkNewModal').classList.remove('open')"><i class="ri-close-line"></i></button>
+    <h2><i class="ri-add-circle-line"></i> Crear ticket en nombre de un usuario</h2>
+    <p style="margin:6px 0 14px;opacity:.7;font-size:13px">Útil para iniciar tú la conversación con un cliente concreto: aviso de pago, recordatorios, soporte proactivo, etc.</p>
+    <form method="POST" action="/admin/tickets/create-for" enctype="multipart/form-data" class="tk-new-form">
+      <label class="tk-field"><span>Usuario destinatario <em style="color:#f43f5e">*</em></span>
+        <select name="user_id" required>
+          <option value="">— Selecciona un usuario —</option>
+          ${userOpts}
+        </select>
+      </label>
+      <label class="tk-field"><span>Asunto <em style="color:#f43f5e">*</em></span>
+        <input type="text" name="subject" required placeholder="Ej: Te confirmamos el pago" maxlength="120">
+      </label>
+      <label class="tk-field"><span>Mensaje inicial (opcional)</span>
+        <textarea name="body" rows="4" placeholder="Hola, te escribo desde soporte para..."></textarea>
+      </label>
+      <label class="tk-field"><span>Adjunto (opcional)</span>
+        <input type="file" name="attachment" accept="image/*,video/*">
+      </label>
+      <div class="tk-new-actions">
+        <button type="button" class="tk-modal-cancel" onclick="document.getElementById('tkNewModal').classList.remove('open')">Cancelar</button>
+        <button type="submit" class="tk-create-btn"><i class="ri-send-plane-fill"></i> Crear ticket</button>
+      </div>
+    </form>
   </div>
 </div>`});
   });
