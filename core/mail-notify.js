@@ -130,6 +130,7 @@ async function notify(db, event, payload = {}) {
         subject,
         status: result.ok ? "sent" : "failed",
         errorMsg: result.ok ? "" : (result.error || ""),
+        bodyHtml,
       });
     } catch (_) {}
     return result;

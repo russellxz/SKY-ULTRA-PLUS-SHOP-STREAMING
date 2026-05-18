@@ -627,3 +627,10 @@ body.light .ml-notify-text small{color:rgba(15,23,42,.6)}
 }
 .ml-notify-toggle input:checked+em{background:linear-gradient(135deg,#7c3aed,#a855f7)}
 .ml-notify-toggle input:checked+em::after{transform:translateX(20px)}
+
+/* Botón reintentar correo fallido */
+.ml-log-actions{text-align:right;white-space:nowrap}
+.ml-retry-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#4338ca);color:#fff;border:0;font-weight:800;font-size:12px;cursor:pointer}
+.ml-retry-btn:hover{filter:brightness(1.08)}
+.ml-retry-btn:disabled{opacity:.6;cursor:wait}
+.ml-log-noret{font-size:11px;color:#94a3b8;font-style:italic}

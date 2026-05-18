@@ -137,7 +137,8 @@ function buildCheckEmailPage(email, emailSent, errorMsg) {
 app.get("/login", (req, res) => {
   if (req.session.user) return res.redirect("/");
   const success = req.query.reset === "1" ? "¡Contraseña restablecida! Ya puedes iniciar sesión." : "";
-  res.send(layout.authPage({ title: "Iniciar sesión", body: auth.loginForm(), db, success }));
+  const error = req.query.err ? String(req.query.err) : "";
+  res.send(layout.authPage({ title: "Iniciar sesión", body: auth.loginForm(), db, success, error }));
 });
 
 app.post("/login", (req, res) => {
@@ -464,6 +465,100 @@ app.post("/reset-password", (req, res) => {
 
 app.get("/logout", (req, res) => {
   req.session.destroy(() => res.redirect("/login"));
+});
+
+// ===== Google OAuth (público, antes de auth.requireUser) =====
+const googleOAuth = require("./core/google-oauth");
+
+app.get("/auth/google/start", (req, res) => {
+  if (!googleOAuth.isEnabled(db)) return res.redirect("/login?err=" + encodeURIComponent("Google OAuth no está configurado."));
+  const state = googleOAuth.newState();
+  req.session.googleState = state;
+  res.redirect(googleOAuth.buildAuthUrl(db, req, state));
+});
+
+app.get("/auth/google/callback", async (req, res) => {
+  if (!googleOAuth.isEnabled(db)) return res.redirect("/login?err=" + encodeURIComponent("Google OAuth no está configurado."));
+  const { code, state } = req.query;
+  if (!code) return res.redirect("/login?err=" + encodeURIComponent("Google canceló la autorización."));
+  if (!state || state !== req.session.googleState) return res.redirect("/login?err=" + encodeURIComponent("Estado inválido."));
+  req.session.googleState = null;
+  try {
+    const tok = await googleOAuth.exchangeCode(db, req, code);
+    const info = await googleOAuth.fetchUserInfo(tok.access_token);
+    const emailLower = String(info.email || "").trim().toLowerCase();
+    if (!emailLower) return res.redirect("/login?err=" + encodeURIComponent("Google no devolvió un correo."));
+    // Si el usuario ya existe → login directo (mantiene verificación previa)
+    const existing = db.getUserByEmail(emailLower);
+    if (existing) {
+      req.session.user = { id: existing.id, username: existing.username, first_name: existing.first_name||"", last_name: existing.last_name||"", email: existing.email, phone: existing.phone||"", role: existing.role, email_verified: existing.email_verified?1:0 };
+      return res.redirect("/");
+    }
+    // Si no existe → flujo de completar registro (pide nombre, apellido, teléfono y contraseña)
+    req.session.googlePending = {
+      email: emailLower,
+      first_name: info.given_name || "",
+      last_name: info.family_name || "",
+      picture: info.picture || "",
+    };
+    res.redirect("/auth/google/complete");
+  } catch (e) {
+    console.error("[google] callback:", e.message);
+    res.redirect("/login?err=" + encodeURIComponent("No se pudo iniciar sesión con Google: " + e.message));
+  }
+});
+
+app.get("/auth/google/complete", (req, res) => {
+  const p = req.session.googlePending;
+  if (!p) return res.redirect("/login");
+  const h = layout.escapeHtml;
+  const siteName = db.getSetting("site_name", "SKY ULTRA PLUS shop");
+  const logo = db.getSetting("site_logo", "");
+  const logoHtml = logo
+    ? `<img class="ac-brand-img" src="${h(logo)}" alt="">`
+    : `<div class="ac-brand-avatar">${h(String(siteName).charAt(0).toUpperCase())}</div>`;
+  const body = `<div class="auth-card">
+    <div class="ac-brand">${logoHtml}<span class="ac-brand-name">${h(siteName)}</span></div>
+    <h2 class="ac-title">Completar registro</h2>
+    <p class="ac-sub">Iniciaste con Google como <strong>${h(p.email)}</strong>. Confirma estos datos para terminar.</p>
+    <form method="POST" action="/auth/google/complete" novalidate>
+      <div class="ac-field-row">
+        <div class="ac-field"><i class="ri-user-3-line"></i><input name="first_name" type="text" placeholder="Nombre" required value="${h(p.first_name)}" autocomplete="given-name"></div>
+        <div class="ac-field"><i class="ri-user-3-line"></i><input name="last_name" type="text" placeholder="Apellido" value="${h(p.last_name)}" autocomplete="family-name"></div>
+      </div>
+      <div class="ac-field ac-wa"><i class="ri-whatsapp-line"></i><select name="whatsapp_country" class="ac-country">${auth.countryOptions("+1")}</select><input name="whatsapp_number" type="tel" placeholder="WhatsApp (requerido para notificaciones)" required autocomplete="tel"></div>
+      <div class="ac-field"><i class="ri-lock-2-line"></i><input name="password" id="gPwd" type="password" placeholder="Crea una contraseña (mín. 6)" required autocomplete="new-password"><button type="button" class="ac-eye" onclick="acEye('gPwd',this)" tabindex="-1"><i class="ri-eye-line"></i></button></div>
+      <div class="ac-field"><i class="ri-lock-2-line"></i><input name="password_confirm" id="gPwd2" type="password" placeholder="Confirmar contraseña" required autocomplete="new-password"><button type="button" class="ac-eye" onclick="acEye('gPwd2',this)" tabindex="-1"><i class="ri-eye-line"></i></button></div>
+      <button type="submit" class="ac-btn"><i class="ri-checkbox-circle-line"></i> Completar y entrar</button>
+    </form>
+  </div>`;
+  res.send(layout.authPage({ title: "Completar registro", body, db }));
+});
+
+app.post("/auth/google/complete", async (req, res) => {
+  const p = req.session.googlePending;
+  if (!p) return res.redirect("/login");
+  const errBack = (msg) => res.redirect("/auth/google/complete?err=" + encodeURIComponent(msg));
+  if (req.body.password !== req.body.password_confirm) return errBack("Las contraseñas no coinciden.");
+  const out = auth.register({
+    first_name: req.body.first_name,
+    last_name: req.body.last_name,
+    email: p.email,
+    password: req.body.password,
+    whatsapp_country: req.body.whatsapp_country || "+1",
+    whatsapp_number: req.body.whatsapp_number || "",
+  });
+  if (!out.ok) return res.redirect("/auth/google/complete?err=" + encodeURIComponent(out.error));
+  // Manda correo de verificación (mismo flujo que registro tradicional)
+  const fullUser = db.getUserById(out.user.id);
+  try { await sendVerificationEmail(req, fullUser); } catch (_) {}
+  req.session.googlePending = null;
+  const requireVerify = db.getSetting("require_email_verification", "0") === "1";
+  if (requireVerify) {
+    return res.send(layout.authPage({ title: "Verifica tu correo", db, body: buildCheckEmailPage(out.user.email, true, "") }));
+  }
+  req.session.user = out.user;
+  res.redirect("/?welcome=1");
 });
 
 // ===== Public payment webhooks (must run BEFORE auth.requireUser) =====

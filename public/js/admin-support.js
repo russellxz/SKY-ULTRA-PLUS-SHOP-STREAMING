@@ -20,14 +20,21 @@
   function spTab(t){
     var c = document.getElementById("spPanelContact");
     var s = document.getElementById("spPanelSlides");
+    var st = document.getElementById("spPanelStyle");
+    var go = document.getElementById("spPanelGoogle");
     if (c) c.style.display = t==="contact" ? "block" : "none";
     if (s) s.style.display = t==="slides" ? "block" : "none";
+    if (st) st.style.display = t==="style" ? "block" : "none";
+    if (go) go.style.display = t==="google" ? "block" : "none";
     var btns = document.querySelectorAll(".sp-tab");
     btns.forEach(function(b){ b.classList.remove("active"); });
     btns.forEach(function(b){
       if (b.getAttribute("data-tab") === t) b.classList.add("active");
     });
-    try { history.replaceState(null, "", "/admin/support" + (t==="slides"?"?tab=slides":"")); } catch(e) {}
+    try {
+      var q = (t === "contact") ? "" : ("?tab=" + t);
+      history.replaceState(null, "", "/admin/support" + q);
+    } catch(e) {}
   }
   function spSync(i,f,v){ if(_spData[i]) _spData[i][f]=v; }
   function spAdd(){ _spData.push({text:"",subtitle:"",colorFrom:"#4c1d95",colorTo:"#7c3aed",image:""}); spRender(); }

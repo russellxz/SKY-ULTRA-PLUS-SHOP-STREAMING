@@ -315,11 +315,54 @@ body.light .ac-field { background: color-mix(in srgb, var(--acc) 4%, var(--card)
 
 /* ===== RESPONSIVE ===== */
 @media(max-width:880px){
-  .at-layout { grid-template-columns:1fr; padding:32px 20px; gap:32px; }
-  .at-promo-col { display:none; }
+  .at-layout { grid-template-columns:1fr; padding:24px 16px; gap:22px; }
+  /* La promo card ya no se esconde en mobile — se muestra arriba más pequeña */
+  .at-promo-col { display:flex; order: -1; }
+  .at-slideshow { max-width:100%; height: 280px; border-radius: 22px; }
+  .at-slide-text h3 { font-size: 22px; margin-bottom: 8px; }
+  .at-slide-text p { font-size: 13px; }
   .at-topbar { padding: 0 16px; }
   .at-brand-name { font-size: 16px; }
   .at-toggle, .at-sup-btn { padding: 7px 11px; font-size: 13px; }
   .at-toggle span, .at-sup-btn span { display:none; }
   .auth-card { padding: 28px 22px; border-radius: 18px; }
 }
+
+/* ===== Texto del slide con gradiente (h3) ===== */
+.at-slide-text { text-align: var(--promo-align, left); padding: 0 32px; }
+@media(max-width:560px){ .at-slide-text { padding: 0 20px; } }
+.at-slide-text h3 {
+  background-image: var(--promo-grad-dark, linear-gradient(135deg,#a78bfa,#60a5fa));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  text-shadow: none;
+}
+body.light .at-slide-text h3 {
+  background-image: var(--promo-grad-light, linear-gradient(135deg,#2563eb,#7c3aed));
+}
+.promo-align-center .at-slide-text { text-align: center; }
+
+/* ===== Botón Google y separador ===== */
+.ac-google-wrap { margin-top: 14px; }
+.ac-google-sep {
+  position: relative; text-align: center; margin: 14px 0 12px;
+  color: rgba(255,255,255,.45); font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em;
+}
+body.light .ac-google-sep { color: rgba(15,23,42,.5); }
+.ac-google-sep::before, .ac-google-sep::after {
+  content: ""; position: absolute; top: 50%; height: 1px; width: calc(50% - 60px);
+  background: rgba(255,255,255,.14);
+}
+body.light .ac-google-sep::before, body.light .ac-google-sep::after { background: rgba(15,23,42,.14); }
+.ac-google-sep::before { left: 0; }
+.ac-google-sep::after { right: 0; }
+.ac-google-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 12px 14px; border-radius: 12px;
+  background: #fff; color: #1f2937; font-weight: 800; font-size: 14px;
+  text-decoration: none; border: 1px solid rgba(0,0,0,.08);
+  transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+}
+.ac-google-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+body:not(.light) .ac-google-btn { background:#fff; }

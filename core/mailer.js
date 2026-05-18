@@ -137,11 +137,16 @@ async function sendMail(db, { to, toName = "", subject, bodyHtml, baseUrl = "" }
   }
 }
 
-function logMail(db, { adminId, recipientEmail, recipientName, subject, status, errorMsg = "" }) {
+function logMail(db, { adminId, recipientEmail, recipientName, subject, status, errorMsg = "", bodyHtml = "" }) {
   try {
+    // Asegura la columna body_html (la usa el botón "Reintentar" del admin)
+    try {
+      const cols = db.sqlite.prepare("PRAGMA table_info(mail_log)").all().map((c) => c.name);
+      if (!cols.includes("body_html")) db.sqlite.exec("ALTER TABLE mail_log ADD COLUMN body_html TEXT DEFAULT ''");
+    } catch (_) {}
     db.sqlite.prepare(
-      "INSERT INTO mail_log (admin_id,recipient_email,recipient_name,subject,status,error_msg,sent_at) VALUES (?,?,?,?,?,?,?)"
-    ).run(adminId || null, recipientEmail, recipientName || "", subject, status, errorMsg, new Date().toISOString());
+      "INSERT INTO mail_log (admin_id,recipient_email,recipient_name,subject,status,error_msg,body_html,sent_at) VALUES (?,?,?,?,?,?,?,?)"
+    ).run(adminId || null, recipientEmail, recipientName || "", subject, status, errorMsg, String(bodyHtml || ""), new Date().toISOString());
   } catch {}
 }
 
